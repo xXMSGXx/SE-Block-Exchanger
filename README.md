@@ -2,6 +2,29 @@
 
 A Python tool to automatically scan Space Engineers blueprint files and replace all light armor blocks with their heavy armor variants.
 
+## 🎯 Why Use This Tool?
+
+**Save Hours of Tedious Manual Work!**
+
+Converting light armor to heavy armor in Space Engineers is painful:
+- ❌ Manually replacing hundreds or thousands of blocks takes **hours**
+- ❌ Easy to miss blocks hidden inside your ship
+- ❌ Risk of structural mistakes during manual conversion
+- ❌ No way to batch convert multiple blueprints
+
+**This tool does it all automatically in seconds:**
+- ✅ Converts **entire blueprints instantly** (even 1000+ block ships)
+- ✅ **100% accurate** - finds every light armor block automatically
+- ✅ **Completely safe** - creates new blueprints, never modifies originals
+- ✅ **Zero game downtime** - works on blueprint files while you play
+- ✅ **Batch processing** - convert your entire blueprint library at once
+
+**Perfect for:**
+- 🚀 Converting survival blueprints to combat-ready heavy armor
+- 🏗️ Upgrading old designs without rebuilding from scratch
+- ⚔️ Preparing fleet ships for PvP battles
+- 🔄 Testing designs with different armor types quickly
+
 ## ✨ Two Ways to Use
 
 ### 🖥️ Standalone Desktop App (Recommended!)
@@ -245,9 +268,26 @@ Feel free to submit issues or pull requests to add support for:
 - GUI interface
 - Reverse conversion (heavy to light)
 
+**Note:** By contributing, you agree that your contributions will be licensed under the same terms as this project. All copyright and ownership remain with the original copyright holder.
+
 ## License
 
-This tool is provided as-is for Space Engineers players and modders.
+**Copyright © 2025. All Rights Reserved.**
+
+This software is provided for **personal use only**. You may **NOT**:
+- Redistribute, publish, or share this software publicly
+- Sell or use this software commercially
+- Claim this software as your own work
+- Remove copyright notices
+
+**You MAY:**
+- Use this software personally for Space Engineers blueprints
+- Contribute improvements via pull requests
+- Fork for personal modifications (must not redistribute)
+
+See the [LICENSE](LICENSE) file for complete terms.
+
+**TL;DR:** Use it, improve it, but don't steal it or redistribute it.
 
 ## Credits
 
