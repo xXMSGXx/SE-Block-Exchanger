@@ -1,0 +1,7 @@
+# Space Engineers Armor Block Replacer
+
+# Core dependencies (none needed for CLI)
+
+# Web UI dependencies (optional)
+flask>=3.0.0
+flask-cors>=4.0.0
