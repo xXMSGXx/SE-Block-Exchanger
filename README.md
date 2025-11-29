@@ -1,12 +1,12 @@
 # Space Engineers Armor Block Replacer
 
-A Python tool to automatically scan Space Engineers blueprint files and replace all light armor blocks with their heavy armor variants.
+A Python tool to automatically convert armor blocks in Space Engineers blueprints - light to heavy OR heavy to light!
 
 ## 🎯 Why Use This Tool?
 
 **Save Hours of Tedious Manual Work!**
 
-Converting light armor to heavy armor in Space Engineers is painful:
+Converting armor types in Space Engineers is painful:
 - ❌ Manually replacing hundreds or thousands of blocks takes **hours**
 - ❌ Easy to miss blocks hidden inside your ship
 - ❌ Risk of structural mistakes during manual conversion
@@ -14,7 +14,8 @@ Converting light armor to heavy armor in Space Engineers is painful:
 
 **This tool does it all automatically in seconds:**
 - ✅ Converts **entire blueprints instantly** (even 1000+ block ships)
-- ✅ **100% accurate** - finds every light armor block automatically
+- ✅ **100% accurate** - finds every armor block automatically
+- ✅ **Bidirectional** - light to heavy OR heavy to light conversion
 - ✅ **Completely safe** - creates new blueprints, never modifies originals
 - ✅ **Zero game downtime** - works on blueprint files while you play
 - ✅ **Batch processing** - convert your entire blueprint library at once
@@ -23,6 +24,7 @@ Converting light armor to heavy armor in Space Engineers is painful:
 - 🚀 Converting survival blueprints to combat-ready heavy armor
 - 🏗️ Upgrading old designs without rebuilding from scratch
 - ⚔️ Preparing fleet ships for PvP battles
+- 💰 Downgrading expensive heavy armor ships to save resources
 - 🔄 Testing designs with different armor types quickly
 
 ## ✨ Two Ways to Use
@@ -36,11 +38,12 @@ Traditional CLI for advanced users and scripting
 ## Features
 
 - ✅ **Standalone Desktop GUI** - Native application with tactical hologram styling
+- ✅ **Bidirectional Conversion** - Light to Heavy OR Heavy to Light armor
 - ✅ **No Dependencies** - Uses Python standard library only (tkinter)
 - ✅ **Blueprint Scanner** - Automatically finds and lists all your blueprints
-- ✅ **Safe Conversion** - Creates new `HEAVYARMOR_` blueprints (preserves originals)
+- ✅ **Safe Conversion** - Creates new prefixed blueprints (preserves originals)
 - ✅ Scans Space Engineers blueprint XML files (`bp.sbc`)
-- ✅ Replaces all light armor block types with heavy armor equivalents
+- ✅ Converts between light and heavy armor block types
 - ✅ Supports both Large and Small grid blocks
 - ✅ Automatic backup creation before modification (CLI)
 - ✅ Comprehensive armor block type coverage (60+ block variants)
@@ -49,7 +52,7 @@ Traditional CLI for advanced users and scripting
 
 ## Supported Block Types
 
-The tool replaces the following light armor blocks with their heavy variants:
+The tool converts between light and heavy armor blocks (bidirectional):
 
 ### Large Grid
 - Standard blocks (cube, slope, corner, inverted corner)
@@ -111,13 +114,14 @@ A native desktop application with tactical hologram styling:
 1. **Application launches** and automatically scans your SE blueprints
 2. **Browse or search** for blueprints in the left panel
 3. **Select a blueprint** to view details on the right
-4. **Review the conversion** - see light armor block count
-5. **Click conversion button** (only enabled if light armor present)
-6. **Confirm operation** - new blueprint created with `HEAVYARMOR_` prefix
+4. **Choose conversion mode** - Light→Heavy (orange) or Heavy→Light (cyan)
+5. **Review block counts** - button only enabled if convertible blocks exist
+6. **Click conversion button** - Creates new prefixed blueprint
 7. **Original preserved** - your source blueprint remains untouched
 
 #### Features
 
+- ✅ **Bidirectional conversion** - Toggle between Light→Heavy and Heavy→Light
 - ✅ **No browser required** - Native desktop application
 - ✅ **Zero dependencies** - Uses Python's built-in tkinter
 - ✅ **Fast and lightweight** - Instant startup
@@ -130,9 +134,14 @@ A native desktop application with tactical hologram styling:
 
 ### Basic Usage
 
-Replace armor blocks in a blueprint (creates automatic backup):
+**Convert light to heavy armor (creates automatic backup):**
 ```bash
 python se_armor_replacer.py path/to/blueprint/bp.sbc
+```
+
+**Convert heavy to light armor:**
+```bash
+python se_armor_replacer.py path/to/blueprint/bp.sbc --reverse
 ```
 
 ### Advanced Options
@@ -160,15 +169,20 @@ python se_armor_replacer.py --list-mappings
 ### Command-Line Arguments
 
 ```
-usage: se_armor_replacer.py [-h] [-o OUTPUT] [-v] [--no-backup] [--list-mappings] input
+usage: se_armor_replacer.py [-h] [-o OUTPUT] [-v] [--no-backup] [--reverse] [--list-mappings] [input]
 
 positional arguments:
   input                 Path to blueprint file (bp.sbc) or directory containing it
 
 optional arguments:
-  -h, --help           show this help message and exit
+  -h, --help            show this help message and exit
   -o OUTPUT, --output OUTPUT
-                       Output file path (default: modify in place)
+                        Output file path (default: modify in place)
+  -v, --verbose         Enable verbose output
+  --no-backup           Do not create backup file when modifying in place
+  --reverse             Convert heavy armor to light (instead of light to heavy)
+  --list-mappings       List all armor block mappings and exit
+```
   -v, --verbose        Enable verbose output
   --no-backup          Do not create backup file when modifying in place
   --list-mappings      List all armor block mappings and exit
@@ -265,8 +279,8 @@ Space Engineers blueprints use XML format with structure like:
 Feel free to submit issues or pull requests to add support for:
 - Additional armor block variants
 - Batch processing multiple blueprints
-- GUI interface
-- Reverse conversion (heavy to light)
+- Custom block mappings for modded armor blocks
+- Export conversion reports
 
 **Note:** By contributing, you agree that your contributions will be licensed under the same terms as this project. All copyright and ownership remain with the original copyright holder.
 

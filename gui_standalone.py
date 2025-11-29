@@ -51,7 +51,8 @@ class TacticalCommandCenter(tk.Tk):
         
         # Initialize services
         self.scanner = BlueprintScanner()
-        self.converter = BlueprintConverter(verbose=True)
+        self.conversion_mode = "light_to_heavy"  # or "heavy_to_light"
+        self.converter = BlueprintConverter(verbose=True, reverse=False)
         self.selected_blueprint: Optional[BlueprintInfo] = None
         self.blueprints = []
         
@@ -344,7 +345,42 @@ class TacticalCommandCenter(tk.Tk):
         self.heavy_count_label.pack(pady=10)
     
     def create_conversion_button(self, parent):
-        """Create the main conversion button."""
+        """Create the main conversion button and mode selector."""
+        # Mode selector frame
+        mode_frame = tk.Frame(parent, bg=TacticalTheme.BG_MEDIUM)
+        mode_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
+        
+        tk.Label(mode_frame, text="CONVERSION MODE:",
+                font=TacticalTheme.FONT_NORMAL,
+                fg=TacticalTheme.CYAN_PRIMARY,
+                bg=TacticalTheme.BG_MEDIUM).pack(side=tk.LEFT, padx=10)
+        
+        # Mode toggle buttons
+        self.mode_light_to_heavy_btn = tk.Button(mode_frame,
+                                                  text="[ LIGHT → HEAVY ]",
+                                                  font=TacticalTheme.FONT_NORMAL,
+                                                  fg=TacticalTheme.BG_DARK,
+                                                  bg=TacticalTheme.ORANGE_PRIMARY,
+                                                  activeforeground=TacticalTheme.BG_DARK,
+                                                  activebackground=TacticalTheme.ORANGE_DIM,
+                                                  relief=tk.FLAT,
+                                                  cursor="hand2",
+                                                  command=lambda: self.set_conversion_mode("light_to_heavy"))
+        self.mode_light_to_heavy_btn.pack(side=tk.LEFT, padx=5)
+        
+        self.mode_heavy_to_light_btn = tk.Button(mode_frame,
+                                                  text="[ HEAVY → LIGHT ]",
+                                                  font=TacticalTheme.FONT_NORMAL,
+                                                  fg=TacticalTheme.CYAN_PRIMARY,
+                                                  bg=TacticalTheme.BG_DARK,
+                                                  activeforeground=TacticalTheme.BG_DARK,
+                                                  activebackground=TacticalTheme.CYAN_DIM,
+                                                  relief=tk.FLAT,
+                                                  cursor="hand2",
+                                                  command=lambda: self.set_conversion_mode("heavy_to_light"))
+        self.mode_heavy_to_light_btn.pack(side=tk.LEFT, padx=5)
+        
+        # Conversion button
         self.convert_btn = tk.Button(parent,
                                     text="[ INITIATE HEAVY ARMOR CONVERSION ]",
                                     font=TacticalTheme.FONT_LARGE,
@@ -510,11 +546,68 @@ class TacticalCommandCenter(tk.Tk):
         self.light_count_label.config(text=f"{bp.light_armor_count} BLOCKS")
         self.heavy_count_label.config(text=f"{bp.heavy_armor_count} BLOCKS")
         
-        # Enable/disable convert button
-        if bp.light_armor_count > 0:
-            self.convert_btn.config(state=tk.NORMAL)
+        # Enable/disable convert button based on conversion mode
+        self.update_convert_button_state()
+    
+    def set_conversion_mode(self, mode: str):
+        """Set the conversion mode (light_to_heavy or heavy_to_light)."""
+        self.conversion_mode = mode
+        self.converter = BlueprintConverter(verbose=True, reverse=(mode == "heavy_to_light"))
+        
+        # Update button styling
+        if mode == "light_to_heavy":
+            self.mode_light_to_heavy_btn.config(
+                fg=TacticalTheme.BG_DARK,
+                bg=TacticalTheme.ORANGE_PRIMARY
+            )
+            self.mode_heavy_to_light_btn.config(
+                fg=TacticalTheme.CYAN_PRIMARY,
+                bg=TacticalTheme.BG_DARK
+            )
+            self.convert_btn.config(
+                text="[ INITIATE HEAVY ARMOR CONVERSION ]",
+                fg=TacticalTheme.ORANGE_PRIMARY,
+                highlightbackground=TacticalTheme.ORANGE_PRIMARY
+            )
         else:
+            self.mode_light_to_heavy_btn.config(
+                fg=TacticalTheme.CYAN_PRIMARY,
+                bg=TacticalTheme.BG_DARK
+            )
+            self.mode_heavy_to_light_btn.config(
+                fg=TacticalTheme.BG_DARK,
+                bg=TacticalTheme.CYAN_PRIMARY
+            )
+            self.convert_btn.config(
+                text="[ INITIATE LIGHT ARMOR CONVERSION ]",
+                fg=TacticalTheme.CYAN_PRIMARY,
+                highlightbackground=TacticalTheme.CYAN_PRIMARY
+            )
+        
+        # Update button state for current selection
+        self.update_convert_button_state()
+        self.status_label.config(text=f"MODE: {mode.replace('_', ' ').upper()}")
+    
+    def update_convert_button_state(self):
+        """Enable/disable convert button based on mode and available blocks."""
+        if not self.selected_blueprint:
             self.convert_btn.config(state=tk.DISABLED)
+            return
+        
+        bp = self.selected_blueprint
+        
+        if self.conversion_mode == "light_to_heavy":
+            # Need light armor blocks to convert to heavy
+            if bp.light_armor_count > 0:
+                self.convert_btn.config(state=tk.NORMAL)
+            else:
+                self.convert_btn.config(state=tk.DISABLED)
+        else:  # heavy_to_light
+            # Need heavy armor blocks to convert to light
+            if bp.heavy_armor_count > 0:
+                self.convert_btn.config(state=tk.NORMAL)
+            else:
+                self.convert_btn.config(state=tk.DISABLED)
     
     def convert_blueprint(self):
         """Convert the selected blueprint."""
@@ -523,12 +616,22 @@ class TacticalCommandCenter(tk.Tk):
         
         bp = self.selected_blueprint
         
+        # Determine conversion details based on mode
+        if self.conversion_mode == "light_to_heavy":
+            mode_name = "heavy armor"
+            prefix = "HEAVYARMOR_"
+            block_count = bp.light_armor_count
+        else:
+            mode_name = "light armor"
+            prefix = "LIGHTARMOR_"
+            block_count = bp.heavy_armor_count
+        
         # Confirm
         response = messagebox.askyesno(
             "Confirm Conversion",
-            f"Convert {bp.display_name} to heavy armor?\n\n"
-            f"This will create: HEAVYARMOR_{bp.name}\n\n"
-            f"Light armor blocks: {bp.light_armor_count}",
+            f"Convert {bp.display_name} to {mode_name}?\n\n"
+            f"This will create: {prefix}{bp.name}\n\n"
+            f"Blocks to convert: {block_count}",
             icon='warning'
         )
         
@@ -551,16 +654,19 @@ class TacticalCommandCenter(tk.Tk):
     
     def on_conversion_complete(self, scanned, converted):
         """Handle conversion completion."""
+        mode_name = "heavy armor" if self.conversion_mode == "light_to_heavy" else "light armor"
+        prefix = "HEAVYARMOR_" if self.conversion_mode == "light_to_heavy" else "LIGHTARMOR_"
+        
         self.scanned_label.config(text=str(scanned))
         self.converted_label.config(text=str(converted))
         self.status_label.config(text="CONVERSION COMPLETE")
-        self.convert_btn.config(state=tk.NORMAL)
+        self.update_convert_button_state()
         
         messagebox.showinfo(
             "Conversion Complete",
-            f"Successfully converted {converted} blocks!\n\n"
+            f"Successfully converted {converted} blocks to {mode_name}!\n\n"
             f"Blocks scanned: {scanned}\n"
-            f"New blueprint created with HEAVYARMOR_ prefix"
+            f"New blueprint created with {prefix} prefix"
         )
         
         # Reload blueprints

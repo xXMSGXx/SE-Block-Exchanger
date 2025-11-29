@@ -13,10 +13,10 @@ from typing import Dict, List, Tuple
 
 
 class ArmorBlockReplacer:
-    """Replaces light armor blocks with heavy armor variants in Space Engineers blueprints."""
+    """Replaces armor blocks in Space Engineers blueprints (light to heavy or heavy to light)."""
     
     # Mapping of light armor SubtypeIds to their heavy armor equivalents
-    ARMOR_REPLACEMENTS = {
+    LIGHT_TO_HEAVY = {
         # Large Grid Blocks
         'LargeBlockArmorBlock': 'LargeHeavyBlockArmorBlock',
         'LargeBlockArmorSlope': 'LargeHeavyBlockArmorSlope',
@@ -66,11 +66,25 @@ class ArmorBlockReplacer:
         'SmallArmorSlopedCornerBase': 'SmallHeavyArmorSlopedCornerBase',
     }
     
-    def __init__(self, verbose: bool = False):
-        """Initialize the replacer with optional verbose output."""
+    # Create reverse mapping (heavy to light)
+    HEAVY_TO_LIGHT = {v: k for k, v in LIGHT_TO_HEAVY.items()}
+    
+    # Backward compatibility
+    ARMOR_REPLACEMENTS = LIGHT_TO_HEAVY
+    
+    def __init__(self, verbose: bool = False, reverse: bool = False):
+        """
+        Initialize the replacer with optional verbose output.
+        
+        Args:
+            verbose: Enable detailed logging
+            reverse: If True, converts heavy to light instead of light to heavy
+        """
         self.verbose = verbose
+        self.reverse = reverse
         self.replacements_made = 0
         self.blocks_scanned = 0
+        self.mapping = self.HEAVY_TO_LIGHT if reverse else self.LIGHT_TO_HEAVY
     
     def log(self, message: str):
         """Print message if verbose mode is enabled."""
@@ -105,11 +119,12 @@ class ArmorBlockReplacer:
     
     def replace_armor_blocks(self, tree: ET.ElementTree) -> int:
         """
-        Replace light armor blocks with heavy armor variants in the XML tree.
+        Replace armor blocks in the XML tree based on the conversion mode.
         Returns the number of replacements made.
         """
         root = tree.getroot()
         replacements = 0
+        direction = "heavy->light" if self.reverse else "light->heavy"
         
         # Find all CubeBlocks sections
         for cube_blocks in root.findall('.//CubeBlocks'):
@@ -121,10 +136,10 @@ class ArmorBlockReplacer:
                 if subtype_elem is not None and subtype_elem.text:
                     current_subtype = subtype_elem.text.strip()
                     
-                    # Check if this is a light armor block that needs replacement
-                    if current_subtype in self.ARMOR_REPLACEMENTS:
-                        new_subtype = self.ARMOR_REPLACEMENTS[current_subtype]
-                        self.log(f"Replacing {current_subtype} -> {new_subtype}")
+                    # Check if this block needs replacement
+                    if current_subtype in self.mapping:
+                        new_subtype = self.mapping[current_subtype]
+                        self.log(f"[{direction}] {current_subtype} -> {new_subtype}")
                         subtype_elem.text = new_subtype
                         replacements += 1
         
@@ -174,19 +189,23 @@ class ArmorBlockReplacer:
     
     def get_replacement_summary(self) -> str:
         """Get a summary of the replacement operation."""
+        direction = "heavy armor with light armor" if self.reverse else "light armor with heavy armor"
         return (f"Scanned {self.blocks_scanned} blocks, "
-                f"replaced {self.replacements_made} light armor blocks with heavy armor variants.")
+                f"replaced {self.replacements_made} {direction} blocks.")
 
 
 def main():
     """Main entry point for the script."""
     parser = argparse.ArgumentParser(
-        description='Replace light armor blocks with heavy armor in Space Engineers blueprints',
+        description='Replace armor blocks in Space Engineers blueprints (light to heavy or heavy to light)',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Replace armor in a blueprint (creates backup)
+  # Convert light to heavy armor (creates backup)
   python se_armor_replacer.py path/to/blueprint/bp.sbc
+  
+  # Convert heavy to light armor
+  python se_armor_replacer.py path/to/blueprint/bp.sbc --reverse
   
   # Replace and save to a different file
   python se_armor_replacer.py input.sbc -o output.sbc
@@ -199,11 +218,13 @@ Examples:
         """
     )
     
-    parser.add_argument('input', help='Path to blueprint file (bp.sbc) or directory containing it')
+    parser.add_argument('input', nargs='?', help='Path to blueprint file (bp.sbc) or directory containing it')
     parser.add_argument('-o', '--output', help='Output file path (default: modify in place)')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
     parser.add_argument('--no-backup', action='store_true', 
                        help='Do not create backup file when modifying in place')
+    parser.add_argument('--reverse', action='store_true',
+                       help='Convert heavy armor to light (instead of light to heavy)')
     parser.add_argument('--list-mappings', action='store_true',
                        help='List all armor block mappings and exit')
     
@@ -213,12 +234,21 @@ Examples:
     if args.list_mappings:
         print("Light Armor -> Heavy Armor Mappings:")
         print("=" * 60)
-        for light, heavy in sorted(ArmorBlockReplacer.ARMOR_REPLACEMENTS.items()):
+        for light, heavy in sorted(ArmorBlockReplacer.LIGHT_TO_HEAVY.items()):
             print(f"{light:40} -> {heavy}")
+        print("\n\nHeavy Armor -> Light Armor Mappings:")
+        print("=" * 60)
+        for heavy, light in sorted(ArmorBlockReplacer.HEAVY_TO_LIGHT.items()):
+            print(f"{heavy:40} -> {light}")
         return 0
     
+    # Input required if not listing mappings
+    if not args.input:
+        parser.print_help()
+        return 1
+    
     # Create replacer instance
-    replacer = ArmorBlockReplacer(verbose=args.verbose)
+    replacer = ArmorBlockReplacer(verbose=args.verbose, reverse=args.reverse)
     
     try:
         # Process the blueprint
@@ -229,12 +259,16 @@ Examples:
         )
         
         # Print summary
-        print(f"\n✓ Success!")
+        mode = "Heavy->Light" if args.reverse else "Light->Heavy"
+        print(f"\n✓ Success! [{mode} conversion]")
         print(f"  Blocks scanned: {blocks_scanned}")
         print(f"  Replacements made: {replacements}")
         
         if replacements == 0:
-            print("\n  No light armor blocks found to replace.")
+            source_type = "heavy" if args.reverse else "light"
+            print(f"\n  No {source_type} armor blocks found to replace.")
+        
+        return 0
         
         return 0
         

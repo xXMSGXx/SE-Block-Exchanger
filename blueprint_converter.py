@@ -10,14 +10,23 @@ from se_armor_replacer import ArmorBlockReplacer
 
 
 class BlueprintConverter:
-    """Converts blueprints by copying and applying armor replacements."""
+    """Converts blueprints by copying and applying armor replacements (light to heavy or heavy to light)."""
     
     HEAVYARMOR_PREFIX = "HEAVYARMOR_"
+    LIGHTARMOR_PREFIX = "LIGHTARMOR_"
     
-    def __init__(self, verbose: bool = False):
-        """Initialize the blueprint converter."""
-        self.replacer = ArmorBlockReplacer(verbose=verbose)
+    def __init__(self, verbose: bool = False, reverse: bool = False):
+        """
+        Initialize the blueprint converter.
+        
+        Args:
+            verbose: Enable detailed logging
+            reverse: If True, converts heavy to light instead of light to heavy
+        """
+        self.replacer = ArmorBlockReplacer(verbose=verbose, reverse=reverse)
         self.verbose = verbose
+        self.reverse = reverse
+        self.prefix = self.LIGHTARMOR_PREFIX if reverse else self.HEAVYARMOR_PREFIX
     
     def log(self, message: str):
         """Print message if verbose mode is enabled."""
@@ -26,7 +35,8 @@ class BlueprintConverter:
     
     def create_heavy_armor_blueprint(self, source_path: Path) -> Tuple[Path, int, int]:
         """
-        Create a new blueprint with HEAVYARMOR prefix and convert armor blocks.
+        Create a new blueprint with converted armor blocks.
+        Creates HEAVYARMOR_ prefix for light->heavy, LIGHTARMOR_ for heavy->light.
         
         Args:
             source_path: Path to the source blueprint directory
@@ -52,7 +62,7 @@ class BlueprintConverter:
             raise ValueError(f"No bp.sbc found in: {source_path}")
         
         # Create destination path
-        dest_name = self.HEAVYARMOR_PREFIX + source_path.name
+        dest_name = self.prefix + source_path.name
         dest_path = source_path.parent / dest_name
         
         # Check if destination already exists
@@ -80,17 +90,17 @@ class BlueprintConverter:
     def get_destination_path(self, source_path: Path) -> Path:
         """Get the destination path for a given source blueprint."""
         source_path = Path(source_path)
-        dest_name = self.HEAVYARMOR_PREFIX + source_path.name
+        dest_name = self.prefix + source_path.name
         return source_path.parent / dest_name
     
     def check_destination_exists(self, source_path: Path) -> bool:
-        """Check if a HEAVYARMOR version already exists."""
+        """Check if a converted version already exists."""
         dest_path = self.get_destination_path(source_path)
         return dest_path.exists()
     
     def delete_heavy_armor_blueprint(self, source_path: Path) -> bool:
         """
-        Delete the HEAVYARMOR version of a blueprint if it exists.
+        Delete the converted version of a blueprint if it exists.
         
         Args:
             source_path: Path to the source blueprint directory
