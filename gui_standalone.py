@@ -4,11 +4,12 @@ Tactical Command Center GUI using tkinter
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import ttk
+from tkinter import messagebox
 import threading
-from pathlib import Path
 from typing import Optional
 import sys
+import os
 
 from blueprint_scanner import BlueprintScanner, BlueprintInfo
 from blueprint_converter import BlueprintConverter
@@ -80,19 +81,45 @@ class TacticalCommandCenter(tk.Tk):
         # Header Frame
         self.create_header()
         
-        # Main content area
-        main_frame = tk.Frame(self, bg=TacticalTheme.BG_DARK)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        # Main content area (PanedWindow for resizable sections)
+        self.main_pane = tk.PanedWindow(self, orient=tk.HORIZONTAL, bg=TacticalTheme.BG_DARK, sashwidth=4, sashrelief=tk.RAISED)
+        self.main_pane.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Left Panel - Blueprint Selector
-        self.create_blueprint_panel(main_frame)
+        left_frame = tk.Frame(self.main_pane, bg=TacticalTheme.BG_MEDIUM)
+        self.main_pane.add(left_frame, minsize=300, width=350)
+        self.create_blueprint_panel(left_frame)
+        
+        # Center Panel - 3D Preview (The "Star" of the show)
+        center_frame = tk.Frame(self.main_pane, bg=TacticalTheme.BG_DARK)
+        self.main_pane.add(center_frame, minsize=400, stretch="always")
+        self.create_3d_preview_section(center_frame)
         
         # Right Panel - Details and Conversion
-        self.create_conversion_panel(main_frame)
+        right_frame = tk.Frame(self.main_pane, bg=TacticalTheme.BG_MEDIUM)
+        self.main_pane.add(right_frame, minsize=300, width=350)
+        self.create_control_panel(right_frame)
         
         # Footer - Status Bar
         self.create_footer()
     
+    def create_control_panel(self, parent):
+        """Create the right panel with details and conversion controls."""
+        # Container frame to add padding/border
+        panel = tk.Frame(parent, bg=TacticalTheme.BG_MEDIUM,
+                        highlightbackground=TacticalTheme.CYAN_PRIMARY,
+                        highlightthickness=2)
+        panel.pack(fill=tk.BOTH, expand=True, ipadx=5, ipady=5)
+        
+        # Details section
+        self.create_details_section(panel)
+        
+        # Exchange visualization
+        self.create_exchange_section(panel)
+        
+        # Conversion button
+        self.create_conversion_button(panel)
+
     def create_header(self):
         """Create the header with system status."""
         header = tk.Frame(self, bg=TacticalTheme.BG_MEDIUM, 
@@ -145,9 +172,7 @@ class TacticalCommandCenter(tk.Tk):
         panel = tk.Frame(parent, bg=TacticalTheme.BG_MEDIUM,
                         highlightbackground=TacticalTheme.CYAN_PRIMARY,
                         highlightthickness=2)
-        panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, 
-                  padx=(0, 5), ipadx=10, ipady=10)
-        panel.config(width=350)
+        panel.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
         
         # Header
         tk.Label(panel, text=">> BLUEPRINT DATABASE",
@@ -209,23 +234,100 @@ class TacticalCommandCenter(tk.Tk):
         
         self.bp_listbox.bind('<<ListboxSelect>>', self.on_blueprint_select)
     
-    def create_conversion_panel(self, parent):
-        """Create the right panel with details and conversion."""
-        panel = tk.Frame(parent, bg=TacticalTheme.BG_MEDIUM,
-                        highlightbackground=TacticalTheme.CYAN_PRIMARY,
-                        highlightthickness=2)
-        panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, 
-                  ipadx=10, ipady=10)
+    def create_3d_preview_section(self, parent):
+        """Create center section with tabs for Info and XML Viewer."""
+        container = tk.Frame(
+            parent,
+            bg=TacticalTheme.BG_DARK,
+            highlightbackground=TacticalTheme.CYAN_PRIMARY,
+            highlightthickness=2,
+        )
+        container.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
         
-        # Details section
-        self.create_details_section(panel)
+        # Style for Notebook
+        style = ttk.Style()
+        style.theme_use('default')
+        style.configure("TNotebook", background=TacticalTheme.BG_DARK, borderwidth=0)
+        style.configure("TNotebook.Tab", background=TacticalTheme.BG_MEDIUM, foreground=TacticalTheme.TEXT_GRAY, padding=[10, 5], font=TacticalTheme.FONT_NORMAL)
+        style.map("TNotebook.Tab", background=[("selected", TacticalTheme.ORANGE_PRIMARY)], foreground=[("selected", TacticalTheme.BG_DARK)])
         
-        # Exchange visualization
-        self.create_exchange_section(panel)
+        self.notebook = ttk.Notebook(container)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
         
-        # Conversion button
-        self.create_conversion_button(panel)
-    
+        # TAB 1: INTEL
+        self.tab_intel = tk.Frame(self.notebook, bg=TacticalTheme.BG_DARK)
+        self.notebook.add(self.tab_intel, text="INTEL")
+        
+        tk.Label(
+            self.tab_intel,
+            text=">> BLUEPRINT INTEL",
+            font=TacticalTheme.FONT_LARGE,
+            fg=TacticalTheme.ORANGE_PRIMARY,
+            bg=TacticalTheme.BG_DARK,
+        ).pack(pady=5)
+
+        self.preview_text = tk.Label(
+            self.tab_intel,
+            text="",
+            font=TacticalTheme.FONT_NORMAL,
+            fg=TacticalTheme.TEXT_CYAN,
+            bg=TacticalTheme.BG_DARK,
+            justify=tk.LEFT,
+            wraplength=650,
+            anchor="nw",
+            padx=20,
+            pady=20,
+        )
+        self.preview_text.pack(fill=tk.BOTH, expand=True)
+        
+        # TAB 2: XML SOURCE
+        self.tab_xml = tk.Frame(self.notebook, bg=TacticalTheme.BG_DARK)
+        self.notebook.add(self.tab_xml, text="XML SOURCE")
+        
+        xml_controls = tk.Frame(self.tab_xml, bg=TacticalTheme.BG_DARK)
+        xml_controls.pack(fill=tk.X, padx=5, pady=5)
+        
+        tk.Label(
+            xml_controls,
+            text=">> XML SOURCE VIEWER",
+            font=TacticalTheme.FONT_LARGE,
+            fg=TacticalTheme.CYAN_PRIMARY,
+            bg=TacticalTheme.BG_DARK,
+        ).pack(side=tk.LEFT)
+        
+        self.xml_status = tk.Label(
+            xml_controls,
+            text="(No file loaded)",
+            font=TacticalTheme.FONT_SMALL,
+            fg=TacticalTheme.TEXT_GRAY,
+            bg=TacticalTheme.BG_DARK,
+        )
+        self.xml_status.pack(side=tk.RIGHT)
+        
+        # Text widget with scrollbar
+        xml_frame = tk.Frame(self.tab_xml, bg=TacticalTheme.BG_DARK)
+        xml_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        scrollbar = tk.Scrollbar(xml_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.xml_text = tk.Text(
+            xml_frame,
+            font=("Consolas", 9),
+            bg="#0c1220",
+            fg=TacticalTheme.TEXT_CYAN,
+            insertbackground=TacticalTheme.CYAN_PRIMARY,
+            selectbackground=TacticalTheme.ORANGE_PRIMARY,
+            selectforeground=TacticalTheme.BG_DARK,
+            relief=tk.FLAT,
+            yscrollcommand=scrollbar.set,
+            state=tk.DISABLED
+        )
+        self.xml_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.config(command=self.xml_text.yview)
+
+        self.draw_no_blueprint_selected()
+
     def create_details_section(self, parent):
         """Create blueprint details section."""
         details_frame = tk.Frame(parent, bg=TacticalTheme.BG_GLASS,
@@ -242,6 +344,9 @@ class TacticalCommandCenter(tk.Tk):
         info_frame = tk.Frame(details_frame, bg=TacticalTheme.BG_GLASS)
         info_frame.pack(fill=tk.X, padx=20, pady=10)
         
+        # Configure grid columns to behave intelligently
+        info_frame.grid_columnconfigure(1, weight=1)
+        
         # Create labels for details
         self.detail_labels = {}
         fields = [
@@ -252,24 +357,58 @@ class TacticalCommandCenter(tk.Tk):
             ("HEAVY ARMOR:", "heavy_armor")
         ]
         
+        # Stack vertically for better responsiveness on narrow panels
         for i, (label_text, key) in enumerate(fields):
-            row = i // 2
-            col = (i % 2) * 2
-            
             tk.Label(info_frame, text=label_text,
                     font=TacticalTheme.FONT_SMALL,
                     fg=TacticalTheme.TEXT_GRAY,
-                    bg=TacticalTheme.BG_GLASS).grid(row=row, column=col, 
-                                                    sticky=tk.W, padx=10, pady=5)
+                    bg=TacticalTheme.BG_GLASS).grid(row=i, column=0, 
+                                                    sticky=tk.W, padx=5, pady=2)
             
             value_label = tk.Label(info_frame, text="--",
                                   font=TacticalTheme.FONT_NORMAL,
                                   fg=TacticalTheme.CYAN_PRIMARY if key not in ["light_armor", "heavy_armor"] else (
                                       TacticalTheme.ORANGE_PRIMARY if key == "light_armor" else TacticalTheme.CYAN_PRIMARY
                                   ),
-                                  bg=TacticalTheme.BG_GLASS)
-            value_label.grid(row=row, column=col+1, sticky=tk.W, padx=5, pady=5)
+                                  bg=TacticalTheme.BG_GLASS,
+                                  wraplength=150) # Allow text wrapping for long names
+            value_label.grid(row=i, column=1, sticky=tk.W, padx=5, pady=2)
             self.detail_labels[key] = value_label
+
+    def draw_no_blueprint_selected(self):
+        """Draw the initial state when no blueprint is selected."""
+        if hasattr(self, 'preview_text'):
+            self.preview_text.config(
+                text=(
+                    "3D viewer removed.\n\n"
+                    "Select a blueprint from the database to review block totals,"
+                    " conversion readiness, and file location."
+                )
+            )
+
+    def draw_blueprint_preview(self, bp: BlueprintInfo):
+        """Update preview text with blueprint summary."""
+        if not hasattr(self, 'preview_text'):
+            return
+
+        convertible = bp.light_armor_count if self.conversion_mode == "light_to_heavy" else bp.heavy_armor_count
+        source_label = "light" if self.conversion_mode == "light_to_heavy" else "heavy"
+        target_label = "heavy" if self.conversion_mode == "light_to_heavy" else "light"
+
+        summary_lines = [
+            f"BLUEPRINT: {bp.display_name}",
+            f"GRID SIZE: {bp.grid_size}",
+            f"TOTAL BLOCKS: {bp.block_count:,}",
+            f"LIGHT ARMOR: {bp.light_armor_count:,}",
+            f"HEAVY ARMOR: {bp.heavy_armor_count:,}",
+            "",
+            f"Current mode: {source_label.upper()} → {target_label.upper()}",
+            f"Convertible blocks available: {convertible:,}",
+            "",
+            f"Blueprint path: {bp.path}",
+        ]
+
+        self.preview_text.config(text="\n".join(summary_lines))
     
     def create_exchange_section(self, parent):
         """Create the exchange visualization section."""
@@ -284,39 +423,44 @@ class TacticalCommandCenter(tk.Tk):
                 bg=TacticalTheme.BG_GLASS).pack(pady=10)
         
         # Three columns: Standard, Arrow, Heavy
+        # Use Grid layout for better resizing behavior
         cols_frame = tk.Frame(exchange_frame, bg=TacticalTheme.BG_GLASS)
-        cols_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
+        cols_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        cols_frame.grid_columnconfigure(0, weight=1) # Standard
+        cols_frame.grid_columnconfigure(1, weight=0) # Arrow
+        cols_frame.grid_columnconfigure(2, weight=1) # Heavy
         
         # Standard blocks column
         std_frame = tk.Frame(cols_frame, bg=TacticalTheme.BG_DARK,
                             highlightbackground=TacticalTheme.CYAN_DIM,
                             highlightthickness=1)
-        std_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+        std_frame.grid(row=0, column=0, sticky="nsew", padx=5)
         
-        tk.Label(std_frame, text="STANDARD BLOCKS",
+        tk.Label(std_frame, text="STANDARD",
                 font=TacticalTheme.FONT_NORMAL,
                 fg=TacticalTheme.CYAN_PRIMARY,
                 bg=TacticalTheme.BG_DARK).pack(pady=5)
         
-        for block in ["> LightArmorBlock", "> LightArmorSlope", 
-                     "> LightArmorCorner", "> LightArmorPanel"]:
+        for block in ["> LightArmor...", "> Slope", 
+                     "> Corner", "> Panel"]:
             tk.Label(std_frame, text=block,
                     font=TacticalTheme.FONT_SMALL,
                     fg=TacticalTheme.TEXT_GRAY,
-                    bg=TacticalTheme.BG_DARK).pack(pady=2)
+                    bg=TacticalTheme.BG_DARK).pack(pady=1)
         
         self.light_count_label = tk.Label(std_frame, text="0 BLOCKS",
                                          font=TacticalTheme.FONT_NORMAL,
                                          fg=TacticalTheme.ORANGE_PRIMARY,
                                          bg=TacticalTheme.BG_DARK)
-        self.light_count_label.pack(pady=10)
+        self.light_count_label.pack(pady=5)
         
         # Arrow column
         arrow_frame = tk.Frame(cols_frame, bg=TacticalTheme.BG_GLASS)
-        arrow_frame.pack(side=tk.LEFT, padx=10)
+        arrow_frame.grid(row=0, column=1, sticky="ns", padx=5)
         
         tk.Label(arrow_frame, text=">>>",
-                font=("Courier New", 24, "bold"),
+                font=("Courier New", 18, "bold"),
                 fg=TacticalTheme.ORANGE_PRIMARY,
                 bg=TacticalTheme.BG_GLASS).pack(expand=True)
         
@@ -324,25 +468,25 @@ class TacticalCommandCenter(tk.Tk):
         heavy_frame = tk.Frame(cols_frame, bg=TacticalTheme.BG_DARK,
                               highlightbackground=TacticalTheme.ORANGE_PRIMARY,
                               highlightthickness=2)
-        heavy_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+        heavy_frame.grid(row=0, column=2, sticky="nsew", padx=5)
         
-        tk.Label(heavy_frame, text="HEAVY ARMOR",
+        tk.Label(heavy_frame, text="HEAVY",
                 font=TacticalTheme.FONT_NORMAL,
                 fg=TacticalTheme.ORANGE_PRIMARY,
                 bg=TacticalTheme.BG_DARK).pack(pady=5)
         
-        for block in ["> HeavyArmorBlock", "> HeavyArmorSlope",
-                     "> HeavyArmorCorner", "> HeavyArmorPanel"]:
+        for block in ["> HeavyArmor...", "> Slope",
+                     "> Corner", "> Panel"]:
             tk.Label(heavy_frame, text=block,
                     font=TacticalTheme.FONT_SMALL,
                     fg=TacticalTheme.ORANGE_DIM,
-                    bg=TacticalTheme.BG_DARK).pack(pady=2)
+                    bg=TacticalTheme.BG_DARK).pack(pady=1)
         
         self.heavy_count_label = tk.Label(heavy_frame, text="0 BLOCKS",
                                          font=TacticalTheme.FONT_NORMAL,
                                          fg=TacticalTheme.ORANGE_PRIMARY,
                                          bg=TacticalTheme.BG_DARK)
-        self.heavy_count_label.pack(pady=10)
+        self.heavy_count_label.pack(pady=5)
     
     def create_conversion_button(self, parent):
         """Create the main conversion button and mode selector."""
@@ -353,12 +497,18 @@ class TacticalCommandCenter(tk.Tk):
         tk.Label(mode_frame, text="CONVERSION MODE:",
                 font=TacticalTheme.FONT_NORMAL,
                 fg=TacticalTheme.CYAN_PRIMARY,
-                bg=TacticalTheme.BG_MEDIUM).pack(side=tk.LEFT, padx=10)
+                bg=TacticalTheme.BG_MEDIUM).pack(anchor=tk.W, padx=5, pady=2)
+        
+        # Button container for equal sizing
+        btn_container = tk.Frame(mode_frame, bg=TacticalTheme.BG_MEDIUM)
+        btn_container.pack(fill=tk.X, padx=5, pady=2)
+        btn_container.grid_columnconfigure(0, weight=1)
+        btn_container.grid_columnconfigure(1, weight=1)
         
         # Mode toggle buttons
-        self.mode_light_to_heavy_btn = tk.Button(mode_frame,
-                                                  text="[ LIGHT → HEAVY ]",
-                                                  font=TacticalTheme.FONT_NORMAL,
+        self.mode_light_to_heavy_btn = tk.Button(btn_container,
+                                                  text="LIGHT → HEAVY",
+                                                  font=TacticalTheme.FONT_SMALL,
                                                   fg=TacticalTheme.BG_DARK,
                                                   bg=TacticalTheme.ORANGE_PRIMARY,
                                                   activeforeground=TacticalTheme.BG_DARK,
@@ -366,11 +516,11 @@ class TacticalCommandCenter(tk.Tk):
                                                   relief=tk.FLAT,
                                                   cursor="hand2",
                                                   command=lambda: self.set_conversion_mode("light_to_heavy"))
-        self.mode_light_to_heavy_btn.pack(side=tk.LEFT, padx=5)
+        self.mode_light_to_heavy_btn.grid(row=0, column=0, sticky="ew", padx=2)
         
-        self.mode_heavy_to_light_btn = tk.Button(mode_frame,
-                                                  text="[ HEAVY → LIGHT ]",
-                                                  font=TacticalTheme.FONT_NORMAL,
+        self.mode_heavy_to_light_btn = tk.Button(btn_container,
+                                                  text="HEAVY → LIGHT",
+                                                  font=TacticalTheme.FONT_SMALL,
                                                   fg=TacticalTheme.CYAN_PRIMARY,
                                                   bg=TacticalTheme.BG_DARK,
                                                   activeforeground=TacticalTheme.BG_DARK,
@@ -378,11 +528,11 @@ class TacticalCommandCenter(tk.Tk):
                                                   relief=tk.FLAT,
                                                   cursor="hand2",
                                                   command=lambda: self.set_conversion_mode("heavy_to_light"))
-        self.mode_heavy_to_light_btn.pack(side=tk.LEFT, padx=5)
+        self.mode_heavy_to_light_btn.grid(row=0, column=1, sticky="ew", padx=2)
         
         # Conversion button
         self.convert_btn = tk.Button(parent,
-                                    text="[ INITIATE HEAVY ARMOR CONVERSION ]",
+                                    text="[ INITIATE CONVERSION ]",
                                     font=TacticalTheme.FONT_LARGE,
                                     fg=TacticalTheme.ORANGE_PRIMARY,
                                     bg=TacticalTheme.BG_DARK,
@@ -394,7 +544,7 @@ class TacticalCommandCenter(tk.Tk):
                                     cursor="hand2",
                                     state=tk.DISABLED,
                                     command=self.convert_blueprint)
-        self.convert_btn.pack(fill=tk.X, padx=10, pady=10, ipady=15)
+        self.convert_btn.pack(fill=tk.X, padx=10, pady=10, ipady=10)
     
     def create_footer(self):
         """Create the status bar footer."""
@@ -533,11 +683,12 @@ class TacticalCommandCenter(tk.Tk):
     def update_details(self):
         """Update details panel with selected blueprint."""
         if not self.selected_blueprint:
+            self.draw_no_blueprint_selected()
             return
         
         bp = self.selected_blueprint
         
-        self.detail_labels['name'].config(text=bp.display_name[:30])
+        self.detail_labels['name'].config(text=bp.display_name) # Removed truncation, relying on wrap
         self.detail_labels['grid'].config(text=bp.grid_size)
         self.detail_labels['blocks'].config(text=str(bp.block_count))
         self.detail_labels['light_armor'].config(text=str(bp.light_armor_count))
@@ -545,6 +696,13 @@ class TacticalCommandCenter(tk.Tk):
         
         self.light_count_label.config(text=f"{bp.light_armor_count} BLOCKS")
         self.heavy_count_label.config(text=f"{bp.heavy_armor_count} BLOCKS")
+        
+        # Update 3D preview
+        self.draw_blueprint_preview(bp)
+        
+        # Load original XML preview
+        bp_file = bp.path / 'bp.sbc'
+        self.load_xml_content(bp_file, f"SOURCE: {bp.name}")
         
         # Enable/disable convert button based on conversion mode
         self.update_convert_button_state()
@@ -565,7 +723,7 @@ class TacticalCommandCenter(tk.Tk):
                 bg=TacticalTheme.BG_DARK
             )
             self.convert_btn.config(
-                text="[ INITIATE HEAVY ARMOR CONVERSION ]",
+                text="[ CONVERT TO HEAVY ]",
                 fg=TacticalTheme.ORANGE_PRIMARY,
                 highlightbackground=TacticalTheme.ORANGE_PRIMARY
             )
@@ -579,13 +737,15 @@ class TacticalCommandCenter(tk.Tk):
                 bg=TacticalTheme.CYAN_PRIMARY
             )
             self.convert_btn.config(
-                text="[ INITIATE LIGHT ARMOR CONVERSION ]",
+                text="[ CONVERT TO LIGHT ]",
                 fg=TacticalTheme.CYAN_PRIMARY,
                 highlightbackground=TacticalTheme.CYAN_PRIMARY
             )
         
         # Update button state for current selection
         self.update_convert_button_state()
+        if self.selected_blueprint:
+            self.draw_blueprint_preview(self.selected_blueprint)
         self.status_label.config(text=f"MODE: {mode.replace('_', ' ').upper()}")
     
     def update_convert_button_state(self):
@@ -662,6 +822,14 @@ class TacticalCommandCenter(tk.Tk):
         self.status_label.config(text="CONVERSION COMPLETE")
         self.update_convert_button_state()
         
+        # Show the converted XML content
+        if self.selected_blueprint:
+            dest_path = self.converter.get_destination_path(self.selected_blueprint.path)
+            bp_file = dest_path / 'bp.sbc'
+            self.load_xml_content(bp_file, f"CONVERTED: {dest_path.name}")
+            # Switch to XML tab
+            self.notebook.select(self.tab_xml)
+        
         messagebox.showinfo(
             "Conversion Complete",
             f"Successfully converted {converted} blocks to {mode_name}!\n\n"
@@ -671,7 +839,28 @@ class TacticalCommandCenter(tk.Tk):
         
         # Reload blueprints
         self.load_blueprints_async()
-    
+
+    def load_xml_content(self, file_path, status_text):
+        """Load XML content into the viewer."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read(50000) # Read first 50KB to avoid UI freeze
+                if len(content) == 50000:
+                    content += "\n... (File truncated for preview)"
+            
+            self.xml_text.config(state=tk.NORMAL)
+            self.xml_text.delete(1.0, tk.END)
+            self.xml_text.insert(tk.END, content)
+            self.xml_text.config(state=tk.DISABLED)
+            
+            self.xml_status.config(text=status_text)
+            
+        except Exception as e:
+            self.xml_text.config(state=tk.NORMAL)
+            self.xml_text.delete(1.0, tk.END)
+            self.xml_text.insert(tk.END, f"Error reading file: {e}")
+            self.xml_text.config(state=tk.DISABLED)
+
     def show_error(self, message):
         """Show error message."""
         self.status_label.config(text="ERROR")

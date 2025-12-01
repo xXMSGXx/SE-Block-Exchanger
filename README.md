@@ -39,7 +39,7 @@ Traditional CLI for advanced users and scripting
 
 - ✅ **Standalone Desktop GUI** - Native application with tactical hologram styling
 - ✅ **Bidirectional Conversion** - Light to Heavy OR Heavy to Light armor
-- ✅ **No Dependencies** - Uses Python standard library only (tkinter)
+- ✅ **Blueprint Intel Panel** - Text-focused preview summarizing grid stats and conversion readiness
 - ✅ **Blueprint Scanner** - Automatically finds and lists all your blueprints
 - ✅ **Safe Conversion** - Creates new prefixed blueprints (preserves originals)
 - ✅ Scans Space Engineers blueprint XML files (`bp.sbc`)
@@ -72,18 +72,19 @@ python se_armor_replacer.py --list-mappings
 
 ## Requirements
 
-- Python 3.7 or higher
-- **For Standalone GUI**: No external packages required (uses tkinter - included with Python)
-- **For CLI**: No external packages required (uses Python standard library)
+- Python 3.7 or higher (tkinter ships with the standard Python installer)
+- No external packages required for either the GUI or CLI (Python standard library only)
 
 ## Installation
 
 1. Clone or download this repository
-2. Ensure Python 3.7+ is installed on your system
+2. Ensure Python 3.7+ is installed on your system (tkinter ships with the official installer)
+3. (Optional) Create and activate a virtual environment for isolation
 
 ```bash
-# Verify Python version
-python --version
+python -m venv .venv
+.\.venv\Scripts\activate  # PowerShell
+python --version            # Verify interpreter
 ```
 
 ## Usage
@@ -104,26 +105,30 @@ A native desktop application with tactical hologram styling:
 
 - **Blueprint Database Panel** - Left side with search and scrollable list
 - **Details Panel** - Right side showing selected blueprint information
+- **Blueprint Intel Panel** - Center panel summarizing block counts, conversion readiness, and file path
 - **Exchange Visualization** - Before/after block type display
 - **Tactical Styling** - Gunmetal grey, neon cyan/orange, tech-glass effects
 - **Status Bar** - System status, scan/conversion counters
 - **Corner Brackets** - Military-grade targeting system aesthetic
 
+> **Note:** The legacy 3D viewport has been retired for stability. The center panel now delivers a fast text-based intel summary instead of a rendered model.
+
 #### How to Use
 
 1. **Application launches** and automatically scans your SE blueprints
 2. **Browse or search** for blueprints in the left panel
-3. **Select a blueprint** to view details on the right
-4. **Choose conversion mode** - Light→Heavy (orange) or Heavy→Light (cyan)
-5. **Review block counts** - button only enabled if convertible blocks exist
-6. **Click conversion button** - Creates new prefixed blueprint
-7. **Original preserved** - your source blueprint remains untouched
+3. **Select a blueprint** to view details in the right panel and intel summary in the center panel
+4. **Review blueprint intel** to confirm how many blocks are convertible in the current mode
+5. **Choose conversion mode** - Light→Heavy (orange) or Heavy→Light (cyan)
+6. **Review block counts** - button only enabled if convertible blocks exist
+7. **Click conversion button** - Creates new prefixed blueprint
+8. **Original preserved** - your source blueprint remains untouched
 
 #### Features
 
+- ✅ **Blueprint intel summary** - Text-focused stats highlight convertible blocks and file paths
 - ✅ **Bidirectional conversion** - Toggle between Light→Heavy and Heavy→Light
 - ✅ **No browser required** - Native desktop application
-- ✅ **Zero dependencies** - Uses Python's built-in tkinter
 - ✅ **Fast and lightweight** - Instant startup
 - ✅ **Automatic scanning** - Finds all blueprints on launch
 - ✅ **Search filter** - Quickly find specific blueprints

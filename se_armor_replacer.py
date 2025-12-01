@@ -131,17 +131,42 @@ class ArmorBlockReplacer:
             for block in cube_blocks.findall('MyObjectBuilder_CubeBlock'):
                 self.blocks_scanned += 1
                 
-                # IMPORTANT: Space Engineers uses <SubtypeName> not <SubtypeId>
-                subtype_elem = block.find('SubtypeName')
-                if subtype_elem is not None and subtype_elem.text:
-                    current_subtype = subtype_elem.text.strip()
+                subtype_name = block.find('SubtypeName')
+                subtype_id = block.find('SubtypeId')
+                
+                current_subtype = None
+                matched_elem = None
+                
+                # Priority: Check SubtypeName first
+                if subtype_name is not None and subtype_name.text:
+                    candidate = subtype_name.text.strip()
+                    if candidate in self.mapping:
+                        current_subtype = candidate
+                        matched_elem = subtype_name
+                
+                # If SubtypeName didn't match (or didn't exist), check SubtypeId
+                # BUT ONLY if SubtypeName didn't exist at all. 
+                # If SubtypeName exists but is not in mapping, we should NOT check SubtypeId
+                # to prevent false positives (e.g. modded blocks using vanilla SubtypeId).
+                elif subtype_name is None and subtype_id is not None and subtype_id.text:
+                    candidate = subtype_id.text.strip()
+                    if candidate in self.mapping:
+                        current_subtype = candidate
+                        matched_elem = subtype_id
+                
+                if current_subtype is None:
+                    continue
+                
+                new_subtype = self.mapping[current_subtype]
+                self.log(f"[{direction}] {current_subtype} -> {new_subtype}")
+                
+                # Update all present subtype elements to ensure consistency
+                if subtype_name is not None:
+                    subtype_name.text = new_subtype
+                if subtype_id is not None:
+                    subtype_id.text = new_subtype
                     
-                    # Check if this block needs replacement
-                    if current_subtype in self.mapping:
-                        new_subtype = self.mapping[current_subtype]
-                        self.log(f"[{direction}] {current_subtype} -> {new_subtype}")
-                        subtype_elem.text = new_subtype
-                        replacements += 1
+                replacements += 1
         
         return replacements
     
@@ -161,6 +186,10 @@ class ArmorBlockReplacer:
         input_file = self.find_blueprint_file(Path(input_path))
         self.log(f"Processing blueprint: {input_file}")
         
+        # Reset counters for this run
+        self.blocks_scanned = 0
+        self.replacements_made = 0
+
         # Parse the XML file
         try:
             tree = ET.parse(input_file)
@@ -185,6 +214,16 @@ class ArmorBlockReplacer:
         tree.write(output_file, encoding='utf-8', xml_declaration=True)
         self.log(f"Output written to: {output_file}")
         
+        # Check for and remove bp.sbcB5 (binary cache) if it exists in the same directory
+        # This is critical because the game prefers the binary file over the XML
+        binary_file = output_file.with_name(output_file.stem + "B5")
+        if binary_file.exists():
+            try:
+                binary_file.unlink()
+                self.log(f"Removed binary cache file: {binary_file}")
+            except Exception as e:
+                self.log(f"Warning: Could not remove binary cache file {binary_file}: {e}")
+
         return self.blocks_scanned, self.replacements_made
     
     def get_replacement_summary(self) -> str:

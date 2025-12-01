@@ -1,7 +1,3 @@
 # Space Engineers Armor Block Replacer
-
-# Core dependencies (none needed for CLI)
-
-# Web UI dependencies (optional)
-flask>=3.0.0
-flask-cors>=4.0.0
+# No external dependencies are required.
+# The command-line and tkinter GUI both rely only on the Python standard library.

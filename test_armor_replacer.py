@@ -35,8 +35,10 @@ class TestArmorBlockReplacer(unittest.TestCase):
         
         for subtype_id in blocks:
             block = ET.SubElement(cube_blocks, 'MyObjectBuilder_CubeBlock')
-            subtype = ET.SubElement(block, 'SubtypeId')
-            subtype.text = subtype_id
+            subtype_id_elem = ET.SubElement(block, 'SubtypeId')
+            subtype_id_elem.text = subtype_id
+            subtype_name_elem = ET.SubElement(block, 'SubtypeName')
+            subtype_name_elem.text = subtype_id
         
         tree = ET.ElementTree(root)
         test_file = self.test_dir / 'bp.sbc'
@@ -58,12 +60,14 @@ class TestArmorBlockReplacer(unittest.TestCase):
         
         # Verify the replacements
         tree = ET.parse(test_file)
-        subtypes = [elem.text for elem in tree.findall('.//SubtypeId')]
+        subtype_ids = [elem.text for elem in tree.findall('.//SubtypeId')]
+        subtype_names = [elem.text for elem in tree.findall('.//SubtypeName')]
         
-        self.assertIn('LargeHeavyBlockArmorBlock', subtypes)
-        self.assertIn('SmallHeavyBlockArmorBlock', subtypes)
-        self.assertNotIn('LargeBlockArmorBlock', subtypes)
-        self.assertNotIn('SmallBlockArmorBlock', subtypes)
+        for collection in (subtype_ids, subtype_names):
+            self.assertIn('LargeHeavyBlockArmorBlock', collection)
+            self.assertIn('SmallHeavyBlockArmorBlock', collection)
+            self.assertNotIn('LargeBlockArmorBlock', collection)
+            self.assertNotIn('SmallBlockArmorBlock', collection)
     
     def test_no_replacements_needed(self):
         """Test blueprint with no light armor blocks."""
@@ -120,13 +124,17 @@ class TestArmorBlockReplacer(unittest.TestCase):
         
         # Verify original is unchanged
         original_tree = ET.parse(test_file)
-        original_subtypes = [elem.text for elem in original_tree.findall('.//SubtypeId')]
-        self.assertIn('LargeBlockArmorBlock', original_subtypes)
+        original_ids = [elem.text for elem in original_tree.findall('.//SubtypeId')]
+        original_names = [elem.text for elem in original_tree.findall('.//SubtypeName')]
+        self.assertIn('LargeBlockArmorBlock', original_ids)
+        self.assertIn('LargeBlockArmorBlock', original_names)
         
         # Verify output has replacements
         output_tree = ET.parse(output_file)
-        output_subtypes = [elem.text for elem in output_tree.findall('.//SubtypeId')]
-        self.assertIn('LargeHeavyBlockArmorBlock', output_subtypes)
+        output_ids = [elem.text for elem in output_tree.findall('.//SubtypeId')]
+        output_names = [elem.text for elem in output_tree.findall('.//SubtypeName')]
+        self.assertIn('LargeHeavyBlockArmorBlock', output_ids)
+        self.assertIn('LargeHeavyBlockArmorBlock', output_names)
     
     def test_all_armor_types(self):
         """Test all defined armor type replacements."""
@@ -142,13 +150,14 @@ class TestArmorBlockReplacer(unittest.TestCase):
         
         # Verify all were replaced
         tree = ET.parse(test_file)
-        subtypes = [elem.text for elem in tree.findall('.//SubtypeId')]
+        subtype_ids = [elem.text for elem in tree.findall('.//SubtypeId')]
+        subtype_names = [elem.text for elem in tree.findall('.//SubtypeName')]
         
-        for light_armor in light_blocks:
-            self.assertNotIn(light_armor, subtypes)
-        
-        for heavy_armor in ArmorBlockReplacer.ARMOR_REPLACEMENTS.values():
-            self.assertIn(heavy_armor, subtypes)
+        for collection in (subtype_ids, subtype_names):
+            for light_armor in light_blocks:
+                self.assertNotIn(light_armor, collection)
+            for heavy_armor in ArmorBlockReplacer.ARMOR_REPLACEMENTS.values():
+                self.assertIn(heavy_armor, collection)
     
     def test_replacement_summary(self):
         """Test the replacement summary method."""
@@ -159,7 +168,7 @@ class TestArmorBlockReplacer(unittest.TestCase):
         summary = self.replacer.get_replacement_summary()
         
         self.assertIn('2 blocks', summary)
-        self.assertIn('2 light armor blocks', summary)
+        self.assertIn('replaced 2 light armor', summary)
 
 
 class TestArmorMappings(unittest.TestCase):

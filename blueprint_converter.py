@@ -74,6 +74,12 @@ class BlueprintConverter:
         self.log(f"Copying blueprint: {source_path.name} -> {dest_name}")
         shutil.copytree(source_path, dest_path)
         
+        # Delete binary blueprint file if it exists (force game to reload from XML)
+        binary_bp_file = dest_path / 'bp.sbcB5'
+        if binary_bp_file.exists():
+            self.log(f"Removing binary blueprint file: {binary_bp_file}")
+            binary_bp_file.unlink()
+
         # Convert armor blocks in the new copy
         new_bp_file = dest_path / 'bp.sbc'
         self.log(f"Converting armor blocks in: {new_bp_file}")
