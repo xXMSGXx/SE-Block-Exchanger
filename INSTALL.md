@@ -1,25 +1,60 @@
 # Installation and Build Guide
 
-## Running from Source
-1. Install Python 3.10+ (tkinter is bundled with the official installer)
-2. (Optional) Create and activate a virtual environment:
-   ```bash
-   python -m venv .venv
-   .\.venv\Scripts\activate
-   ```
-3. Run the application:
-   ```bash
-   python gui_standalone.py
-   ```
+## Run From Source
 
-## Building Standalone Executable
-To create a single `.exe` file that can be shared with other users (no Python installation required):
+1. Install Python 3.8+.
+2. (Optional) Create a virtual environment.
+3. Install dependencies:
 
-1. Double-click `build_exe.bat`
-   OR
-2. Run the following command:
-   ```bash
-   pyinstaller --noconfirm --onefile --windowed --name "SE_Tactical_Command" gui_standalone.py
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-The resulting `SE_Tactical_Command.exe` will be found in the `dist` folder.
+4. Launch GUI:
+
+```bash
+python gui_standalone.py
+```
+
+5. Or run CLI:
+
+```bash
+python se_armor_replacer.py --help
+```
+
+## Test Suite
+
+```bash
+pytest -q
+```
+
+Expected: all tests pass.
+
+## Build Windows EXE
+
+```bash
+build_exe.bat
+```
+
+The build embeds:
+
+- `README.md`
+- `LICENSE`
+- `RELEASE_NOTES.md`
+- `profiles/`
+- `data/`
+
+Output executable is written to `dist/`.
+
+## GitHub Actions
+
+- CI: `.github/workflows/ci.yml`
+- Tagged release: `.github/workflows/release.yml`
+
+Release flow:
+
+1. Set `version.py` (for example `3.0.0`)
+2. Commit and push
+3. Create tag `v3.0.0`
+4. Push tag to trigger release workflow
+

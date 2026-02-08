@@ -1,164 +1,88 @@
 # Release Notes
 
-## v1.0.0 - Initial Release (November 2025)
+## v3.0.0 (2026-02-07)
 
-### 🎉 Welcome to SE Block Exchanger!
+### Major Architecture
 
-The **Space Engineers Block Exchanger** is a powerful Python tool designed to automate armor block conversions in Space Engineers blueprints. Save hours of tedious manual work by converting entire blueprints in seconds!
+- Added `version.py` as single source of truth for version/build/channel.
+- Added `app_settings.py` and `update_checker.py` to centralize config and updates.
+- Introduced modular mapping registry (`mappings/`) with validation:
+  - duplicate targets
+  - circular swaps
+  - category registration and merge checks
+- Refactored conversion engine to support multi-category conversion in a single pass.
+- Preserved legacy armor constants and default behavior for CLI backward compatibility.
 
----
+### Mapping Expansion
 
-### ✨ New Features
+- Added built-in categories:
+  - `armor` (existing 70 pairs)
+  - `thrusters`
+  - `weapons`
+  - `functional`
+- Added profile loading system (`mapping_profiles.py`) and `profiles/` auto-discovery.
+- Shipped built-in mod profiles:
+  - WeaponCore
+  - Assertive Armaments
+  - Build Vision
 
-#### 🔄 Bidirectional Armor Conversion
-- **Light → Heavy**: Convert light armor blocks to heavy armor variants for increased durability
-- **Heavy → Light**: Convert heavy armor blocks to light armor variants to save resources
-- Toggle conversion direction with a single click in the GUI or `--reverse` flag in CLI
+### Analytics Dashboard
 
-#### 🖥️ Standalone Desktop Application
-- Native Windows desktop application using tkinter
-- **Tactical Hologram Interface** with military-grade styling:
-  - Gunmetal grey and neon cyan/orange color scheme
-  - Tech-glass panel effects
-  - Corner bracket targeting system aesthetic
-- **Blueprint Database Panel** with search and scrollable list
-- **Real-time Block Analysis** showing light/heavy armor counts
-- **Exchange Visualization** with before/after block display
-- Threaded operations for responsive UI during scanning/conversion
+- Added block cost database: `data/block_costs.json`.
+- Implemented analytics engine (`blueprint_analytics.py`):
+  - component totals
+  - ingot and ore back-calculation
+  - PCU and mass totals
+  - category distribution
+  - conversion delta comparison
+  - CSV/TXT report export
+- Added blueprint health audit:
+  - missing control/power checks
+  - thruster balance warnings
+  - unknown block subtype detection
+  - fix actions for missing control/power blocks
 
-#### 💻 Command Line Interface
-- Full-featured CLI for automation and scripting
-- Process single blueprints or entire directories
-- Verbose output mode for detailed logging
-- List all supported block mappings with `--list-mappings`
+### UI Overhaul
 
-#### 🛡️ Safe & Non-Destructive
-- **Automatic Backup Creation** - Creates `.sbc.backup` files before modification (CLI)
-- **Prefix-Based Copies** - GUI creates new blueprints with `HEAVYARMOR_` or `LIGHTARMOR_` prefixes
-- **Original Preservation** - Source blueprints are never modified
+- Fully migrated runtime UI to modular CustomTkinter app (`ui/app.py`).
+- Replaced legacy monolithic `gui_standalone.py` with compatibility launcher.
+- Added:
+  - category toggles
+  - animated progress ring
+  - before/after diff preview
+  - analytics visualization tab
+  - profile editor dialog (create/edit/duplicate/import/export/share/test)
+  - keyboard shortcuts (`Ctrl+O`, `Ctrl+R`, `Ctrl+Z`)
+  - recent directories/blueprints
+  - native Windows drag-and-drop blueprint loading
+  - appearance mode selector (Light/Dark/System)
+  - in-app changelog window
+  - update notification checks
 
-#### 📦 Comprehensive Block Support
-- **60+ armor block types** supported
-- **Large Grid Blocks**:
-  - Standard blocks (cube, slope, corner, inverted corner)
-  - Round armor variants
-  - 2x1 slopes and corners (base and tip)
-  - Half blocks and slopes
-  - Armor panels
-  - Sloped corners
-- **Small Grid Blocks**:
-  - All corresponding small grid variants
+### Distribution and Community
 
----
+- Added CI workflow (`.github/workflows/ci.yml`) with lint, mypy, tests.
+- Added release workflow (`.github/workflows/release.yml`) for tagged builds.
+- Updated packaging scripts/spec to embed data/profiles and versioned executable names.
+- Added icon/logo generation tooling (`generate_icon.py`, `convert_icon.py`) and app icon assets.
+- Updated documentation: `README.md`, `INSTALL.md`, `DEVELOPMENT_PLAN.md`.
+- Added community files:
+  - `CONTRIBUTING.md`
+  - `CODE_OF_CONDUCT.md`
+  - issue templates for bug, feature, mapping request
 
-### 🔧 Technical Details
+### Test Coverage
 
-#### Dependencies
-- **Python 3.7+** required
-- **No external packages** - Uses Python standard library only
-- GUI uses built-in `tkinter` module
+- Kept existing 19 compatibility tests passing.
+- Added new tests for:
+  - mapping registry
+  - profile management
+  - analytics engine/report export
+  - update checker cache behavior
 
-#### File Structure
-| File | Description |
-|------|-------------|
-| `se_armor_replacer.py` | Core armor replacement logic and CLI |
-| `gui_standalone.py` | Standalone desktop GUI application |
-| `blueprint_scanner.py` | Blueprint directory scanner and metadata extractor |
-| `blueprint_converter.py` | Safe blueprint copying and conversion |
-| `launch_gui.bat` | Windows launcher for GUI |
-| `test_armor_replacer.py` | Comprehensive unit test suite |
+## v2.0.0
 
-#### Supported Platforms
-- **Windows** - Full support (native paths, GUI, CLI)
-- **Linux/Mac** - CLI support (GUI may require tkinter installation)
+- Expanded armor mappings to 70 pairs.
+- Added dry-run preview and batch conversion.
+- Added custom directory browsing and improved branding.
 
----
-
-### 📋 Usage Quick Start
-
-#### GUI (Recommended)
-```bash
-# Windows - Double-click launch_gui.bat or run:
-python gui_standalone.py
-```
-
-#### Command Line
-```bash
-# Light to Heavy conversion
-python se_armor_replacer.py path/to/blueprint/bp.sbc
-
-# Heavy to Light conversion
-python se_armor_replacer.py path/to/blueprint/bp.sbc --reverse
-
-# List all supported block mappings
-python se_armor_replacer.py --list-mappings
-```
-
----
-
-### 🧪 Testing
-
-The project includes a comprehensive test suite with 11 unit tests covering:
-- Light to heavy block replacement
-- Heavy to light block replacement (reverse mode)
-- Mixed block processing
-- Backup file creation
-- Output file generation
-- All armor type mappings validation
-
-Run tests with:
-```bash
-python -m unittest test_armor_replacer -v
-```
-
----
-
-### 📍 Blueprint Locations
-
-**Windows Local Blueprints:**
-```
-%APPDATA%\SpaceEngineers\Blueprints\local\<BlueprintName>\bp.sbc
-```
-
-**Steam Workshop:**
-```
-C:\Program Files (x86)\Steam\steamapps\workshop\content\244850\<WorkshopID>\bp.sbc
-```
-
----
-
-### ⚠️ Known Limitations
-
-- Only processes blueprint files (`bp.sbc`), not world saves
-- Does not modify paint colors or skin settings
-- Does not adjust component costs (handled by Space Engineers)
-- Requires manual reload in Space Engineers to see changes
-
----
-
-### 🚀 Perfect For
-
-- 🛡️ Converting survival blueprints to combat-ready heavy armor
-- 🏗️ Upgrading old designs without rebuilding from scratch
-- ⚔️ Preparing fleet ships for PvP battles
-- 💰 Downgrading expensive heavy armor ships to save resources
-- 🔄 Testing designs with different armor types quickly
-- 📦 Batch processing entire blueprint libraries
-
----
-
-### 📜 License
-
-**Copyright © 2025. All Rights Reserved.**
-
-This software is provided for **personal use only**. See the LICENSE file for complete terms.
-
----
-
-### 🙏 Credits
-
-Created for the Space Engineers community to simplify blueprint modifications.
-
----
-
-*For feature requests, bug reports, or contributions, please open an issue or pull request on the project repository.*

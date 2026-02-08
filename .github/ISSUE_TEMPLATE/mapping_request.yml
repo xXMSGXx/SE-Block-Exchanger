@@ -1,0 +1,36 @@
+name: Mapping Request
+description: Request new block conversion mappings (vanilla or modded).
+title: "[Mapping]: "
+labels:
+  - mapping-request
+body:
+  - type: input
+    id: profile_name
+    attributes:
+      label: Profile / Category Name
+      placeholder: "WeaponCore Upgrades"
+    validations:
+      required: true
+  - type: textarea
+    id: pairs
+    attributes:
+      label: Mapping Pairs
+      description: One pair per line as source -> target subtype IDs.
+      placeholder: |
+        LargeGatlingTurret -> WC_LargeGatlingTurret
+        SmallMissileLauncher -> WC_SmallMissileLauncher
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Links to mod pages, docs, or subtype lists.
+  - type: checkboxes
+    id: validation
+    attributes:
+      label: Validation Checklist
+      options:
+        - label: I confirmed there are no circular swaps in my requested pairs.
+        - label: I confirmed each target subtype is unique within this category.
+

@@ -9,8 +9,11 @@ echo.
 echo Launching standalone application...
 echo.
 
-REM Activate virtual environment and launch GUI
-call .venv\Scripts\activate.bat
+REM Try virtual environment first, fall back to system Python
+if exist ".venv\Scripts\activate.bat" (
+    call .venv\Scripts\activate.bat
+)
+
 python gui_standalone.py
 
 pause

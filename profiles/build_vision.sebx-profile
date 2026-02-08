@@ -1,0 +1,35 @@
+{
+  "name": "Build Vision Enhancements",
+  "author": "Meraby Labs",
+  "version": "1.0",
+  "description": "Example profile for Build Vision-compatible block variants.",
+  "game_version": "1.205+",
+  "categories": [
+    {
+      "name": "Build Vision Utility",
+      "description": "Swap vanilla utility blocks with Build Vision variants.",
+      "grid_sizes": [
+        "Large",
+        "Small"
+      ],
+      "pairs": [
+        [
+          "LargeBlockRemoteControl",
+          "BV_RemoteControl"
+        ],
+        [
+          "LargeBlockBatteryBlock",
+          "BV_BatteryBlock"
+        ],
+        [
+          "SmallRemoteControl",
+          "BV_SmallRemoteControl"
+        ],
+        [
+          "SmallBlockBatteryBlock",
+          "BV_SmallBatteryBlock"
+        ]
+      ]
+    }
+  ]
+}

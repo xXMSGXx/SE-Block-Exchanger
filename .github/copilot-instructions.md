@@ -8,7 +8,7 @@
 
 - [x] Install Required Extensions - No extensions required for Python standard library project
 
-- [x] Compile the Project - All tests passing (11/11)
+- [x] Compile the Project - All tests passing (19/19)
 
 - [x] Create and Run Task - Not applicable for command-line Python script
 
@@ -17,18 +17,23 @@
 - [x] Ensure Documentation is Complete - README.md and all documentation files created
 
 ## Project Summary
-Space Engineers Armor Block Replacer - A Python tool that scans Space Engineers blueprint files (bp.sbc) and replaces all light armor blocks with their heavy armor variants.
+Space Engineers Block Exchanger v2.0 (Meraby Labs) — A Python tool that scans Space Engineers blueprint files (bp.sbc) and converts armor blocks between light and heavy variants.
 
 ## Key Features
-- Supports 60+ armor block type mappings (Large and Small grid)
+- 70 armor block mapping pairs (35 Large + 35 Small grid, including DLC/Decorative)
+- Bidirectional conversion (light→heavy and heavy→light)
+- Dry-run preview mode (CLI --dry-run + GUI Preview tab)
+- Batch conversion of multiple blueprints
+- Custom directory browser
 - Automatic backup creation
-- Command-line interface with multiple options
+- Meraby Labs branding (header logo 80px, subtitle, window icon, footer)
+- Multi-format logo support (PNG/JPEG auto-detection in convert_icon.py)
 - No external dependencies (Python standard library only)
-- Comprehensive test suite (11 unit tests)
-- Batch processing capability
+- Comprehensive test suite (19 unit tests across 5 classes)
 
 ## Usage
-Run from command line: `python se_armor_replacer.py path/to/blueprint/bp.sbc`
+GUI: `python gui_standalone.py` or double-click `launch_gui.bat`
+CLI: `python se_armor_replacer.py path/to/blueprint/bp.sbc`
 
 <!--
 ## Execution Guidelines

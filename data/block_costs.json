@@ -1,0 +1,606 @@
+{
+  "metadata": {
+    "source": "Space Engineers vanilla block/component approximations from in-game definitions and wiki data",
+    "version": "1.0",
+    "notes": "Values are used for comparative analytics and planning, not authoritative engineering simulation."
+  },
+  "component_to_ingot": {
+    "SteelPlate": { "Iron": 3.5 },
+    "InteriorPlate": { "Iron": 3.0 },
+    "Construction": { "Iron": 8.0 },
+    "MetalGrid": { "Iron": 12.0, "Nickel": 2.0 },
+    "Motor": { "Iron": 3.0, "Nickel": 2.0 },
+    "Computer": { "Iron": 0.2, "Silicon": 1.0 },
+    "Display": { "Iron": 1.0, "Silicon": 2.0 },
+    "SolarCell": { "Silicon": 2.0, "Nickel": 0.2 },
+    "LargeTube": { "Iron": 12.0 },
+    "SmallTube": { "Iron": 4.0 },
+    "PowerCell": { "Iron": 2.0, "Nickel": 2.0, "Silicon": 1.0 },
+    "Superconductor": { "Iron": 1.0, "Gold": 1.0 },
+    "Reactor": { "Iron": 10.0, "Silver": 5.0 },
+    "Thrust": { "Iron": 2.0, "Cobalt": 3.0, "Gold": 1.0 },
+    "BulletproofGlass": { "Silicon": 5.0 },
+    "Girder": { "Iron": 4.0 },
+    "RadioCommunication": { "Silicon": 1.0, "Nickel": 0.5 },
+    "Detector": { "Iron": 2.0, "Nickel": 1.0 },
+    "Medical": { "Silver": 5.0, "Iron": 1.0, "Nickel": 1.0 },
+    "Canvas": { "Organic": 1.0 },
+    "Explosives": { "Magnesium": 2.0, "Silicon": 1.0, "Iron": 1.0 }
+  },
+  "ore_yields": {
+    "Iron": 0.7,
+    "Nickel": 0.4,
+    "Cobalt": 0.3,
+    "Silicon": 0.7,
+    "Magnesium": 0.007,
+    "Silver": 0.1,
+    "Gold": 0.01,
+    "Platinum": 0.007,
+    "Uranium": 0.007,
+    "Organic": 1.0
+  },
+  "blocks": {
+    "LargeBlockArmorBlock": {
+      "category": "armor",
+      "pcu": 1,
+      "mass": 2520.0,
+      "components": { "SteelPlate": 25 }
+    },
+    "LargeHeavyBlockArmorBlock": {
+      "category": "armor",
+      "pcu": 1,
+      "mass": 15100.0,
+      "components": { "SteelPlate": 150 }
+    },
+    "SmallBlockArmorBlock": {
+      "category": "armor",
+      "pcu": 0,
+      "mass": 10.0,
+      "components": { "SteelPlate": 1 }
+    },
+    "SmallHeavyBlockArmorBlock": {
+      "category": "armor",
+      "pcu": 0,
+      "mass": 30.0,
+      "components": { "SteelPlate": 5 }
+    },
+    "LargeBlockSmallThrust": {
+      "category": "thrusters",
+      "pcu": 12,
+      "mass": 1936.0,
+      "components": {
+        "SteelPlate": 35,
+        "Construction": 20,
+        "LargeTube": 2,
+        "Motor": 4,
+        "Thrust": 12
+      }
+    },
+    "LargeBlockLargeThrust": {
+      "category": "thrusters",
+      "pcu": 36,
+      "mass": 11136.0,
+      "components": {
+        "SteelPlate": 150,
+        "Construction": 40,
+        "LargeTube": 16,
+        "Motor": 8,
+        "Thrust": 80
+      }
+    },
+    "SmallBlockSmallThrust": {
+      "category": "thrusters",
+      "pcu": 8,
+      "mass": 400.0,
+      "components": {
+        "SteelPlate": 15,
+        "Construction": 10,
+        "SmallTube": 4,
+        "Motor": 4,
+        "Thrust": 5
+      }
+    },
+    "SmallBlockLargeThrust": {
+      "category": "thrusters",
+      "pcu": 16,
+      "mass": 1500.0,
+      "components": {
+        "SteelPlate": 40,
+        "Construction": 20,
+        "LargeTube": 4,
+        "Motor": 8,
+        "Thrust": 20
+      }
+    },
+    "LargeBlockSmallHydrogenThrust": {
+      "category": "thrusters",
+      "pcu": 15,
+      "mass": 2200.0,
+      "components": {
+        "SteelPlate": 60,
+        "Construction": 20,
+        "LargeTube": 6,
+        "Motor": 6,
+        "Thrust": 20
+      }
+    },
+    "LargeBlockLargeHydrogenThrust": {
+      "category": "thrusters",
+      "pcu": 48,
+      "mass": 15000.0,
+      "components": {
+        "SteelPlate": 250,
+        "Construction": 80,
+        "LargeTube": 30,
+        "Motor": 16,
+        "Thrust": 120
+      }
+    },
+    "SmallBlockSmallHydrogenThrust": {
+      "category": "thrusters",
+      "pcu": 10,
+      "mass": 500.0,
+      "components": {
+        "SteelPlate": 25,
+        "Construction": 10,
+        "SmallTube": 6,
+        "Motor": 6,
+        "Thrust": 8
+      }
+    },
+    "SmallBlockLargeHydrogenThrust": {
+      "category": "thrusters",
+      "pcu": 24,
+      "mass": 2500.0,
+      "components": {
+        "SteelPlate": 80,
+        "Construction": 30,
+        "LargeTube": 6,
+        "Motor": 10,
+        "Thrust": 35
+      }
+    },
+    "LargeBlockSmallAtmosphericThrust": {
+      "category": "thrusters",
+      "pcu": 12,
+      "mass": 1300.0,
+      "components": {
+        "SteelPlate": 30,
+        "Construction": 20,
+        "LargeTube": 2,
+        "Motor": 8
+      }
+    },
+    "LargeBlockLargeAtmosphericThrust": {
+      "category": "thrusters",
+      "pcu": 36,
+      "mass": 10000.0,
+      "components": {
+        "SteelPlate": 140,
+        "Construction": 50,
+        "LargeTube": 12,
+        "Motor": 20
+      }
+    },
+    "SmallBlockSmallAtmosphericThrust": {
+      "category": "thrusters",
+      "pcu": 8,
+      "mass": 300.0,
+      "components": {
+        "SteelPlate": 10,
+        "Construction": 8,
+        "SmallTube": 4,
+        "Motor": 4
+      }
+    },
+    "SmallBlockLargeAtmosphericThrust": {
+      "category": "thrusters",
+      "pcu": 18,
+      "mass": 1800.0,
+      "components": {
+        "SteelPlate": 45,
+        "Construction": 20,
+        "LargeTube": 4,
+        "Motor": 8
+      }
+    },
+    "LargeGatlingTurret": {
+      "category": "weapons",
+      "pcu": 150,
+      "mass": 8600.0,
+      "components": {
+        "SteelPlate": 80,
+        "Construction": 40,
+        "Computer": 8,
+        "Motor": 8,
+        "MetalGrid": 12,
+        "SmallTube": 24,
+        "LargeTube": 4
+      }
+    },
+    "LargeAutocannonTurret": {
+      "category": "weapons",
+      "pcu": 180,
+      "mass": 12000.0,
+      "components": {
+        "SteelPlate": 130,
+        "Construction": 50,
+        "Computer": 12,
+        "Motor": 12,
+        "MetalGrid": 18,
+        "SmallTube": 24,
+        "LargeTube": 8
+      }
+    },
+    "LargeInteriorTurret": {
+      "category": "weapons",
+      "pcu": 75,
+      "mass": 2500.0,
+      "components": {
+        "SteelPlate": 35,
+        "Construction": 20,
+        "Computer": 6,
+        "Motor": 4,
+        "SmallTube": 12
+      }
+    },
+    "LargeCalibreTurret": {
+      "category": "weapons",
+      "pcu": 240,
+      "mass": 14000.0,
+      "components": {
+        "SteelPlate": 160,
+        "Construction": 60,
+        "Computer": 16,
+        "Motor": 14,
+        "MetalGrid": 22,
+        "LargeTube": 18
+      }
+    },
+    "LargeMissileTurret": {
+      "category": "weapons",
+      "pcu": 210,
+      "mass": 13000.0,
+      "components": {
+        "SteelPlate": 150,
+        "Construction": 40,
+        "Computer": 10,
+        "Motor": 10,
+        "MetalGrid": 12,
+        "LargeTube": 8,
+        "Explosives": 12
+      }
+    },
+    "LargeArtilleryTurret": {
+      "category": "weapons",
+      "pcu": 280,
+      "mass": 18000.0,
+      "components": {
+        "SteelPlate": 220,
+        "Construction": 80,
+        "Computer": 18,
+        "Motor": 16,
+        "MetalGrid": 24,
+        "LargeTube": 20,
+        "Explosives": 18
+      }
+    },
+    "SmallGatlingGun": {
+      "category": "weapons",
+      "pcu": 30,
+      "mass": 950.0,
+      "components": {
+        "SteelPlate": 22,
+        "Construction": 8,
+        "Computer": 4,
+        "Motor": 2,
+        "SmallTube": 10
+      }
+    },
+    "SmallAutocannon": {
+      "category": "weapons",
+      "pcu": 45,
+      "mass": 1200.0,
+      "components": {
+        "SteelPlate": 30,
+        "Construction": 10,
+        "Computer": 6,
+        "Motor": 4,
+        "SmallTube": 16
+      }
+    },
+    "SmallMissileLauncher": {
+      "category": "weapons",
+      "pcu": 40,
+      "mass": 1000.0,
+      "components": {
+        "SteelPlate": 24,
+        "Construction": 8,
+        "Computer": 4,
+        "Motor": 2,
+        "SmallTube": 8,
+        "Explosives": 6
+      }
+    },
+    "SmallArtillery": {
+      "category": "weapons",
+      "pcu": 80,
+      "mass": 1700.0,
+      "components": {
+        "SteelPlate": 45,
+        "Construction": 14,
+        "Computer": 8,
+        "Motor": 6,
+        "LargeTube": 4,
+        "Explosives": 10
+      }
+    },
+    "BasicAssembler": {
+      "category": "production",
+      "pcu": 420,
+      "mass": 6500.0,
+      "components": {
+        "SteelPlate": 80,
+        "Construction": 40,
+        "Computer": 10,
+        "Display": 4,
+        "Motor": 8,
+        "LargeTube": 4
+      }
+    },
+    "LargeAssembler": {
+      "category": "production",
+      "pcu": 560,
+      "mass": 17200.0,
+      "components": {
+        "SteelPlate": 120,
+        "Construction": 80,
+        "Computer": 20,
+        "Display": 8,
+        "Motor": 16,
+        "LargeTube": 10
+      }
+    },
+    "BasicRefinery": {
+      "category": "production",
+      "pcu": 420,
+      "mass": 6800.0,
+      "components": {
+        "SteelPlate": 100,
+        "Construction": 50,
+        "Computer": 8,
+        "Motor": 8,
+        "LargeTube": 6
+      }
+    },
+    "LargeRefinery": {
+      "category": "production",
+      "pcu": 560,
+      "mass": 26200.0,
+      "components": {
+        "SteelPlate": 180,
+        "Construction": 120,
+        "Computer": 16,
+        "Motor": 20,
+        "LargeTube": 20
+      }
+    },
+    "LargeBlockSmallGenerator": {
+      "category": "power",
+      "pcu": 15,
+      "mass": 14300.0,
+      "components": {
+        "SteelPlate": 60,
+        "Construction": 40,
+        "Computer": 8,
+        "Motor": 6,
+        "Reactor": 25,
+        "LargeTube": 4
+      }
+    },
+    "LargeBlockLargeGenerator": {
+      "category": "power",
+      "pcu": 45,
+      "mass": 78000.0,
+      "components": {
+        "SteelPlate": 250,
+        "Construction": 100,
+        "Computer": 20,
+        "Motor": 12,
+        "Reactor": 100,
+        "LargeTube": 12
+      }
+    },
+    "SmallBlockSmallGenerator": {
+      "category": "power",
+      "pcu": 10,
+      "mass": 3500.0,
+      "components": {
+        "SteelPlate": 20,
+        "Construction": 12,
+        "Computer": 4,
+        "Motor": 2,
+        "Reactor": 10,
+        "SmallTube": 6
+      }
+    },
+    "SmallBlockLargeGenerator": {
+      "category": "power",
+      "pcu": 18,
+      "mass": 8200.0,
+      "components": {
+        "SteelPlate": 50,
+        "Construction": 25,
+        "Computer": 8,
+        "Motor": 4,
+        "Reactor": 25,
+        "LargeTube": 4
+      }
+    },
+    "LargeBlockSmallContainer": {
+      "category": "storage",
+      "pcu": 16,
+      "mass": 2500.0,
+      "components": {
+        "SteelPlate": 35,
+        "Construction": 20,
+        "InteriorPlate": 40,
+        "LargeTube": 2
+      }
+    },
+    "LargeBlockLargeContainer": {
+      "category": "storage",
+      "pcu": 30,
+      "mass": 15000.0,
+      "components": {
+        "SteelPlate": 120,
+        "Construction": 40,
+        "InteriorPlate": 160,
+        "LargeTube": 8
+      }
+    },
+    "SmallBlockSmallContainer": {
+      "category": "storage",
+      "pcu": 6,
+      "mass": 800.0,
+      "components": {
+        "SteelPlate": 10,
+        "Construction": 8,
+        "InteriorPlate": 10,
+        "SmallTube": 2
+      }
+    },
+    "SmallBlockLargeContainer": {
+      "category": "storage",
+      "pcu": 12,
+      "mass": 2600.0,
+      "components": {
+        "SteelPlate": 30,
+        "Construction": 12,
+        "InteriorPlate": 40,
+        "SmallTube": 6
+      }
+    },
+    "LargeBlockCockpit": {
+      "category": "control",
+      "pcu": 40,
+      "mass": 4200.0,
+      "components": {
+        "SteelPlate": 25,
+        "Construction": 20,
+        "Computer": 8,
+        "Display": 4,
+        "Motor": 6,
+        "BulletproofGlass": 30
+      }
+    },
+    "SmallBlockCockpit": {
+      "category": "control",
+      "pcu": 20,
+      "mass": 700.0,
+      "components": {
+        "SteelPlate": 8,
+        "Construction": 6,
+        "Computer": 4,
+        "Display": 2,
+        "Motor": 2,
+        "BulletproofGlass": 10
+      }
+    },
+    "LargeBlockRemoteControl": {
+      "category": "control",
+      "pcu": 20,
+      "mass": 3500.0,
+      "components": {
+        "SteelPlate": 20,
+        "Construction": 15,
+        "Computer": 20,
+        "RadioCommunication": 8,
+        "Detector": 4,
+        "Display": 2
+      }
+    },
+    "SmallRemoteControl": {
+      "category": "control",
+      "pcu": 8,
+      "mass": 500.0,
+      "components": {
+        "SteelPlate": 6,
+        "Construction": 4,
+        "Computer": 8,
+        "RadioCommunication": 2,
+        "Detector": 1,
+        "Display": 1
+      }
+    },
+    "LargeBlockBatteryBlock": {
+      "category": "power",
+      "pcu": 25,
+      "mass": 9000.0,
+      "components": {
+        "SteelPlate": 80,
+        "Construction": 40,
+        "Computer": 25,
+        "PowerCell": 80
+      }
+    },
+    "SmallBlockBatteryBlock": {
+      "category": "power",
+      "pcu": 10,
+      "mass": 1000.0,
+      "components": {
+        "SteelPlate": 20,
+        "Construction": 10,
+        "Computer": 5,
+        "PowerCell": 20
+      }
+    },
+    "LargeBlockSolarPanel": {
+      "category": "power",
+      "pcu": 15,
+      "mass": 5000.0,
+      "components": {
+        "SteelPlate": 42,
+        "Construction": 20,
+        "Computer": 8,
+        "SolarCell": 112
+      }
+    },
+    "LargeBlockWindTurbine": {
+      "category": "power",
+      "pcu": 15,
+      "mass": 4200.0,
+      "components": {
+        "SteelPlate": 30,
+        "Construction": 20,
+        "Motor": 8,
+        "Computer": 6,
+        "InteriorPlate": 20
+      }
+    },
+    "LargeHydrogenEngine": {
+      "category": "power",
+      "pcu": 20,
+      "mass": 8500.0,
+      "components": {
+        "SteelPlate": 80,
+        "Construction": 30,
+        "Computer": 10,
+        "Motor": 12,
+        "LargeTube": 8
+      }
+    },
+    "SmallHydrogenEngine": {
+      "category": "power",
+      "pcu": 12,
+      "mass": 2200.0,
+      "components": {
+        "SteelPlate": 20,
+        "Construction": 12,
+        "Computer": 4,
+        "Motor": 6,
+        "SmallTube": 8
+      }
+    }
+  }
+}

@@ -1,5 +1,4 @@
 
-import os
 import shutil
 from pathlib import Path
 from blueprint_converter import BlueprintConverter
@@ -64,7 +63,7 @@ def test_fix():
         print(f"Error: {e}")
         
     # Cleanup
-    # shutil.rmtree(test_dir)
+    shutil.rmtree(test_dir)
 
 if __name__ == "__main__":
     test_fix()

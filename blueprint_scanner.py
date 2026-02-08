@@ -1,18 +1,23 @@
 """
 Blueprint Scanner Module
-Scans Space Engineers blueprint directories and extracts metadata
+Scans Space Engineers blueprint directories and extracts metadata.
 """
 
-import xml.etree.ElementTree as ET
-from pathlib import Path
-from typing import List, Dict, Optional
-from dataclasses import dataclass
 import os
+import xml.etree.ElementTree as ET
+from collections import Counter, defaultdict
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Dict, List, Optional, Sequence
+
+from mappings import MappingRegistry, build_registry
+from se_armor_replacer import ArmorBlockReplacer
 
 
 @dataclass
 class BlueprintInfo:
     """Information about a Space Engineers blueprint."""
+
     name: str
     path: Path
     display_name: str
@@ -21,182 +26,168 @@ class BlueprintInfo:
     light_armor_count: int
     heavy_armor_count: int
     has_bp_file: bool
-    
+    subtype_counts: Dict[str, int] = field(default_factory=dict)
+    category_counts: Dict[str, int] = field(default_factory=dict)
+    convertible_counts: Dict[str, int] = field(default_factory=dict)
+
     def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization."""
         return {
-            'name': self.name,
-            'path': str(self.path),
-            'display_name': self.display_name,
-            'grid_size': self.grid_size,
-            'block_count': self.block_count,
-            'light_armor_count': self.light_armor_count,
-            'heavy_armor_count': self.heavy_armor_count,
-            'has_bp_file': self.has_bp_file
+            "name": self.name,
+            "path": str(self.path),
+            "display_name": self.display_name,
+            "grid_size": self.grid_size,
+            "block_count": self.block_count,
+            "light_armor_count": self.light_armor_count,
+            "heavy_armor_count": self.heavy_armor_count,
+            "has_bp_file": self.has_bp_file,
+            "subtype_counts": self.subtype_counts,
+            "category_counts": self.category_counts,
+            "convertible_counts": self.convertible_counts,
         }
 
 
 class BlueprintScanner:
     """Scans and manages Space Engineers blueprints."""
-    
-    # Mapping from ArmorBlockReplacer - Light Armor Blocks
-    LIGHT_ARMOR_BLOCKS = {
-        'LargeBlockArmorBlock', 'LargeBlockArmorSlope', 'LargeBlockArmorCorner',
-        'LargeBlockArmorCornerInv', 'LargeRoundArmor_Slope', 'LargeRoundArmor_Corner',
-        'LargeRoundArmor_CornerInv', 'LargeBlockArmorSlope2Base', 'LargeBlockArmorSlope2Tip',
-        'LargeBlockArmorCorner2Base', 'LargeBlockArmorCorner2Tip', 'LargeBlockArmorInvCorner2Base',
-        'LargeBlockArmorInvCorner2Tip', 'SmallBlockArmorBlock', 'SmallBlockArmorSlope',
-        'SmallBlockArmorCorner', 'SmallBlockArmorCornerInv', 'SmallRoundArmor_Slope',
-        'SmallRoundArmor_Corner', 'SmallRoundArmor_CornerInv', 'SmallBlockArmorSlope2Base',
-        'SmallBlockArmorSlope2Tip', 'SmallBlockArmorCorner2Base', 'SmallBlockArmorCorner2Tip',
-        'SmallBlockArmorInvCorner2Base', 'SmallBlockArmorInvCorner2Tip', 'LargeHalfArmorBlock',
-        'LargeHalfSlopeArmorBlock', 'SmallHalfArmorBlock', 'SmallHalfSlopeArmorBlock',
-        'LargeArmorPanelLight', 'SmallArmorPanelLight', 'LargeArmorSlopedCorner',
-        'LargeArmorSlopedCornerTip', 'LargeArmorSlopedCornerBase', 'SmallArmorSlopedCorner',
-        'SmallArmorSlopedCornerTip', 'SmallArmorSlopedCornerBase'
-    }
-    
-    # Heavy Armor Blocks
-    HEAVY_ARMOR_BLOCKS = {
-        'LargeHeavyBlockArmorBlock', 'LargeHeavyBlockArmorSlope', 'LargeHeavyBlockArmorCorner',
-        'LargeHeavyBlockArmorCornerInv', 'LargeHeavyRoundArmor_Slope', 'LargeHeavyRoundArmor_Corner',
-        'LargeHeavyRoundArmor_CornerInv', 'LargeHeavyBlockArmorSlope2Base', 'LargeHeavyBlockArmorSlope2Tip',
-        'LargeHeavyBlockArmorCorner2Base', 'LargeHeavyBlockArmorCorner2Tip', 'LargeHeavyBlockArmorInvCorner2Base',
-        'LargeHeavyBlockArmorInvCorner2Tip', 'SmallHeavyBlockArmorBlock', 'SmallHeavyBlockArmorSlope',
-        'SmallHeavyBlockArmorCorner', 'SmallHeavyBlockArmorCornerInv', 'SmallHeavyRoundArmor_Slope',
-        'SmallHeavyRoundArmor_Corner', 'SmallHeavyRoundArmor_CornerInv', 'SmallHeavyBlockArmorSlope2Base',
-        'SmallHeavyBlockArmorSlope2Tip', 'SmallHeavyBlockArmorCorner2Base', 'SmallHeavyBlockArmorCorner2Tip',
-        'SmallHeavyBlockArmorInvCorner2Base', 'SmallHeavyBlockArmorInvCorner2Tip', 'LargeHeavyHalfArmorBlock',
-        'LargeHeavyHalfSlopeArmorBlock', 'SmallHeavyHalfArmorBlock', 'SmallHeavyHalfSlopeArmorBlock',
-        'LargeArmorPanelHeavy', 'SmallArmorPanelHeavy', 'LargeHeavyArmorSlopedCorner',
-        'LargeHeavyArmorSlopedCornerTip', 'LargeHeavyArmorSlopedCornerBase', 'SmallHeavyArmorSlopedCorner',
-        'SmallHeavyArmorSlopedCornerTip', 'SmallHeavyArmorSlopedCornerBase'
-    }
-    
-    def __init__(self):
-        """Initialize the blueprint scanner."""
+
+    LIGHT_ARMOR_BLOCKS = set(ArmorBlockReplacer.LIGHT_TO_HEAVY.keys())
+    HEAVY_ARMOR_BLOCKS = set(ArmorBlockReplacer.LIGHT_TO_HEAVY.values())
+
+    def __init__(
+        self,
+        registry: Optional[MappingRegistry] = None,
+        enabled_categories: Optional[Sequence[str]] = None,
+    ):
+        self.registry = registry if registry else build_registry(include_builtin=True)
+        self.enabled_categories = (
+            [category.name for category in self.registry.list_categories()]
+            if enabled_categories is None
+            else list(enabled_categories)
+        )
         self.blueprints_cache: List[BlueprintInfo] = []
-    
+        self._mapping = self.registry.build_mapping(
+            reverse=False,
+            enabled_categories=self.enabled_categories,
+        )
+
+    def set_enabled_categories(self, enabled_categories: Sequence[str]) -> None:
+        self.enabled_categories = list(enabled_categories)
+        self._mapping = self.registry.build_mapping(
+            reverse=False,
+            enabled_categories=self.enabled_categories,
+        )
+
     def get_default_blueprint_path(self) -> Path:
-        """Get the default Space Engineers blueprint path."""
-        appdata = os.getenv('APPDATA')
+        appdata = os.getenv("APPDATA")
         if not appdata:
             raise RuntimeError("Could not find APPDATA directory")
-        
-        blueprint_path = Path(appdata) / 'SpaceEngineers' / 'Blueprints' / 'local'
-        return blueprint_path
-    
+        return Path(appdata) / "SpaceEngineers" / "Blueprints" / "local"
+
+    def get_workshop_blueprint_path(self) -> Path:
+        appdata = os.getenv("APPDATA")
+        if not appdata:
+            raise RuntimeError("Could not find APPDATA directory")
+        return Path(appdata) / "SpaceEngineers" / "Blueprints" / "workshop"
+
     def scan_blueprints(self, blueprint_dir: Optional[Path] = None) -> List[BlueprintInfo]:
-        """
-        Scan a directory for Space Engineers blueprints.
-        
-        Args:
-            blueprint_dir: Directory to scan. If None, uses default SE directory.
-        
-        Returns:
-            List of BlueprintInfo objects
-        """
         if blueprint_dir is None:
             blueprint_dir = self.get_default_blueprint_path()
-        
         blueprint_dir = Path(blueprint_dir)
         if not blueprint_dir.exists():
             raise FileNotFoundError(f"Blueprint directory not found: {blueprint_dir}")
-        
-        blueprints = []
-        
-        # Scan all subdirectories
+
+        blueprints: List[BlueprintInfo] = []
         for item in blueprint_dir.iterdir():
-            if item.is_dir():
-                bp_file = item / 'bp.sbc'
-                if bp_file.exists():
-                    try:
-                        bp_info = self._parse_blueprint(item, bp_file)
-                        blueprints.append(bp_info)
-                    except Exception as e:
-                        # Skip blueprints that can't be parsed
-                        print(f"Warning: Could not parse {item.name}: {e}")
-                        continue
-        
+            if not item.is_dir():
+                continue
+            bp_file = item / "bp.sbc"
+            if not bp_file.exists():
+                continue
+            try:
+                blueprints.append(self._parse_blueprint(item, bp_file))
+            except Exception as exc:
+                print(f"Warning: Could not parse {item.name}: {exc}")
         self.blueprints_cache = blueprints
         return blueprints
-    
+
     def _parse_blueprint(self, folder_path: Path, bp_file: Path) -> BlueprintInfo:
-        """Parse a blueprint file and extract metadata."""
         tree = ET.parse(bp_file)
         root = tree.getroot()
-        
-        # Use folder name as display name (most reliable)
-        # Space Engineers users typically name the folder, not the internal DisplayName
+
         display_name = folder_path.name
-        
-        # Extract grid size from first CubeGrid
-        grid_size = 'Unknown'
-        grid_size_elem = root.find('.//CubeGrid/GridSizeEnum')
+        grid_size = "Unknown"
+        grid_size_elem = root.find(".//CubeGrid/GridSizeEnum")
         if grid_size_elem is not None and grid_size_elem.text:
             grid_size = grid_size_elem.text.strip()
-        
-        # Count blocks - IMPORTANT: Space Engineers uses SubtypeName not SubtypeId!
-        blocks = root.findall('.//CubeGrid/CubeBlocks/MyObjectBuilder_CubeBlock')
-        block_count = len(blocks)
-        
-        # Count light and heavy armor blocks
+
+        blocks = root.findall(".//CubeGrid/CubeBlocks/MyObjectBuilder_CubeBlock")
+        subtype_counter: Dict[str, int] = Counter()
+        category_counter: Dict[str, int] = defaultdict(int)
+        convertible_counter: Dict[str, int] = defaultdict(int)
+
         light_armor_count = 0
         heavy_armor_count = 0
-        
+
         for block in blocks:
-            # Note: Space Engineers blueprints use <SubtypeName> not <SubtypeId>
-            subtype_elem = block.find('SubtypeName')
-            if subtype_elem is not None and subtype_elem.text:
-                subtype = subtype_elem.text.strip()
-                if subtype in self.LIGHT_ARMOR_BLOCKS:
-                    light_armor_count += 1
-                elif subtype in self.HEAVY_ARMOR_BLOCKS:
-                    heavy_armor_count += 1
-        
+            subtype = self._extract_subtype(block)
+            if not subtype:
+                continue
+
+            subtype_counter[subtype] += 1
+            if subtype in self.LIGHT_ARMOR_BLOCKS:
+                light_armor_count += 1
+            if subtype in self.HEAVY_ARMOR_BLOCKS:
+                heavy_armor_count += 1
+
+            for category in self.registry.list_categories():
+                if subtype in category.pairs:
+                    category_counter[category.name] += 1
+
+            if subtype in self._mapping:
+                target = self._mapping[subtype]
+                convertible_counter[f"{subtype}->{target}"] += 1
+
         return BlueprintInfo(
             name=folder_path.name,
             path=folder_path,
             display_name=display_name,
             grid_size=grid_size,
-            block_count=block_count,
+            block_count=len(blocks),
             light_armor_count=light_armor_count,
             heavy_armor_count=heavy_armor_count,
-            has_bp_file=True
+            has_bp_file=True,
+            subtype_counts=dict(sorted(subtype_counter.items())),
+            category_counts=dict(sorted(category_counter.items())),
+            convertible_counts=dict(sorted(convertible_counter.items())),
         )
-    
+
+    @staticmethod
+    def _extract_subtype(block: ET.Element) -> Optional[str]:
+        subtype_name = block.find("SubtypeName")
+        if subtype_name is not None and subtype_name.text:
+            return subtype_name.text.strip()
+        subtype_id = block.find("SubtypeId")
+        if subtype_id is not None and subtype_id.text:
+            return subtype_id.text.strip()
+        return None
+
     def get_blueprint_by_name(self, name: str) -> Optional[BlueprintInfo]:
-        """Get a blueprint by its folder name."""
         for bp in self.blueprints_cache:
             if bp.name == name:
                 return bp
         return None
-    
-    def filter_blueprints(self, search_term: str = "", 
-                         min_light_armor: int = 0) -> List[BlueprintInfo]:
-        """
-        Filter cached blueprints by search term and minimum light armor count.
-        
-        Args:
-            search_term: Search in blueprint name/display name
-            min_light_armor: Minimum number of light armor blocks
-        
-        Returns:
-            Filtered list of BlueprintInfo objects
-        """
+
+    def filter_blueprints(
+        self,
+        search_term: str = "",
+        min_light_armor: int = 0,
+    ) -> List[BlueprintInfo]:
         filtered = []
         search_lower = search_term.lower()
-        
         for bp in self.blueprints_cache:
-            # Check light armor count
             if bp.light_armor_count < min_light_armor:
                 continue
-            
-            # Check search term
-            if search_term and search_lower not in bp.name.lower() and \
-               search_lower not in bp.display_name.lower():
+            if search_term and search_lower not in bp.name.lower() and search_lower not in bp.display_name.lower():
                 continue
-            
             filtered.append(bp)
-        
         return filtered
+

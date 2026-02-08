@@ -1,329 +1,396 @@
 #!/usr/bin/env python3
 """
-Space Engineers Armor Block Replacer
-Scans Space Engineers blueprint XML files and replaces light armor blocks with heavy armor variants.
+Space Engineers block conversion engine and CLI.
 """
 
-import xml.etree.ElementTree as ET
-import os
-import sys
+from __future__ import annotations
+
 import argparse
+import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
+
+from mapping_profiles import ProfileManager
+from mappings import MappingRegistry, build_registry
+from mappings.armor import ARMOR_PAIRS
+from version import __version__
 
 
 class ArmorBlockReplacer:
-    """Replaces armor blocks in Space Engineers blueprints (light to heavy or heavy to light)."""
-    
-    # Mapping of light armor SubtypeIds to their heavy armor equivalents
-    LIGHT_TO_HEAVY = {
-        # Large Grid Blocks
-        'LargeBlockArmorBlock': 'LargeHeavyBlockArmorBlock',
-        'LargeBlockArmorSlope': 'LargeHeavyBlockArmorSlope',
-        'LargeBlockArmorCorner': 'LargeHeavyBlockArmorCorner',
-        'LargeBlockArmorCornerInv': 'LargeHeavyBlockArmorCornerInv',
-        'LargeRoundArmor_Slope': 'LargeHeavyRoundArmor_Slope',
-        'LargeRoundArmor_Corner': 'LargeHeavyRoundArmor_Corner',
-        'LargeRoundArmor_CornerInv': 'LargeHeavyRoundArmor_CornerInv',
-        'LargeBlockArmorSlope2Base': 'LargeHeavyBlockArmorSlope2Base',
-        'LargeBlockArmorSlope2Tip': 'LargeHeavyBlockArmorSlope2Tip',
-        'LargeBlockArmorCorner2Base': 'LargeHeavyBlockArmorCorner2Base',
-        'LargeBlockArmorCorner2Tip': 'LargeHeavyBlockArmorCorner2Tip',
-        'LargeBlockArmorInvCorner2Base': 'LargeHeavyBlockArmorInvCorner2Base',
-        'LargeBlockArmorInvCorner2Tip': 'LargeHeavyBlockArmorInvCorner2Tip',
-        
-        # Small Grid Blocks
-        'SmallBlockArmorBlock': 'SmallHeavyBlockArmorBlock',
-        'SmallBlockArmorSlope': 'SmallHeavyBlockArmorSlope',
-        'SmallBlockArmorCorner': 'SmallHeavyBlockArmorCorner',
-        'SmallBlockArmorCornerInv': 'SmallHeavyBlockArmorCornerInv',
-        'SmallRoundArmor_Slope': 'SmallHeavyRoundArmor_Slope',
-        'SmallRoundArmor_Corner': 'SmallHeavyRoundArmor_Corner',
-        'SmallRoundArmor_CornerInv': 'SmallHeavyRoundArmor_CornerInv',
-        'SmallBlockArmorSlope2Base': 'SmallHeavyBlockArmorSlope2Base',
-        'SmallBlockArmorSlope2Tip': 'SmallHeavyBlockArmorSlope2Tip',
-        'SmallBlockArmorCorner2Base': 'SmallHeavyBlockArmorCorner2Base',
-        'SmallBlockArmorCorner2Tip': 'SmallHeavyBlockArmorCorner2Tip',
-        'SmallBlockArmorInvCorner2Base': 'SmallHeavyBlockArmorInvCorner2Base',
-        'SmallBlockArmorInvCorner2Tip': 'SmallHeavyBlockArmorInvCorner2Tip',
-        
-        # Half Blocks
-        'LargeHalfArmorBlock': 'LargeHeavyHalfArmorBlock',
-        'LargeHalfSlopeArmorBlock': 'LargeHeavyHalfSlopeArmorBlock',
-        'SmallHalfArmorBlock': 'SmallHeavyHalfArmorBlock',
-        'SmallHalfSlopeArmorBlock': 'SmallHeavyHalfSlopeArmorBlock',
-        
-        # Quarter Blocks
-        'LargeArmorPanelLight': 'LargeArmorPanelHeavy',
-        'SmallArmorPanelLight': 'SmallArmorPanelHeavy',
-        
-        # Additional variants
-        'LargeArmorSlopedCorner': 'LargeHeavyArmorSlopedCorner',
-        'LargeArmorSlopedCornerTip': 'LargeHeavyArmorSlopedCornerTip',
-        'LargeArmorSlopedCornerBase': 'LargeHeavyArmorSlopedCornerBase',
-        'SmallArmorSlopedCorner': 'SmallHeavyArmorSlopedCorner',
-        'SmallArmorSlopedCornerTip': 'SmallHeavyArmorSlopedCornerTip',
-        'SmallArmorSlopedCornerBase': 'SmallHeavyArmorSlopedCornerBase',
-    }
-    
-    # Create reverse mapping (heavy to light)
-    HEAVY_TO_LIGHT = {v: k for k, v in LIGHT_TO_HEAVY.items()}
-    
-    # Backward compatibility
+    """
+    Replaces blocks in Space Engineers blueprints.
+
+    Backward compatibility:
+    - LIGHT_TO_HEAVY / HEAVY_TO_LIGHT / ARMOR_REPLACEMENTS remain armor-only maps.
+    - Default behavior still converts armor only.
+    """
+
+    LIGHT_TO_HEAVY = dict(ARMOR_PAIRS)
+    HEAVY_TO_LIGHT = {target: source for source, target in LIGHT_TO_HEAVY.items()}
     ARMOR_REPLACEMENTS = LIGHT_TO_HEAVY
-    
-    def __init__(self, verbose: bool = False, reverse: bool = False):
-        """
-        Initialize the replacer with optional verbose output.
-        
-        Args:
-            verbose: Enable detailed logging
-            reverse: If True, converts heavy to light instead of light to heavy
-        """
+
+    def __init__(
+        self,
+        verbose: bool = False,
+        reverse: bool = False,
+        enabled_categories: Optional[Sequence[str]] = None,
+        registry: Optional[MappingRegistry] = None,
+        include_profiles: bool = True,
+        profile_dir: Path = Path("profiles"),
+    ):
         self.verbose = verbose
         self.reverse = reverse
         self.replacements_made = 0
         self.blocks_scanned = 0
-        self.mapping = self.HEAVY_TO_LIGHT if reverse else self.LIGHT_TO_HEAVY
-    
-    def log(self, message: str):
-        """Print message if verbose mode is enabled."""
+        self.change_log: List[Tuple[str, str]] = []
+
+        self.registry = registry if registry else build_registry(include_builtin=True)
+        self.profile_manager = ProfileManager(profile_dir)
+        if include_profiles:
+            self._load_profiles()
+
+        if enabled_categories is None:
+            enabled_categories = ("armor",)
+
+        self.enabled_categories = self._resolve_categories(enabled_categories)
+        self.mapping = self.registry.build_mapping(
+            reverse=self.reverse,
+            enabled_categories=self.enabled_categories,
+        )
+
+    def _load_profiles(self) -> None:
+        try:
+            self.profile_manager.load_all()
+            self.profile_manager.register_profile_categories(self.registry)
+        except Exception as exc:
+            self.log(f"[WARN] Failed to load profiles: {exc}")
+
+    def _resolve_categories(self, categories: Sequence[str]) -> List[str]:
+        normalized = [name.strip().lower() for name in categories if name and name.strip()]
+        if not normalized:
+            return ["armor"]
+
+        if len(normalized) == 1 and normalized[0] == "all":
+            return [category.name for category in self.registry.list_categories()]
+
+        resolved: List[str] = []
+        for name in normalized:
+            if self.registry.exists(name):
+                resolved.append(name)
+                continue
+
+            matches = [
+                category.name
+                for category in self.registry.list_categories()
+                if category.name.endswith(f":{name}")
+            ]
+            if len(matches) == 1:
+                resolved.append(matches[0])
+                continue
+
+            if not matches:
+                raise ValueError(f"Unknown mapping category: {name}")
+            raise ValueError(
+                f"Category '{name}' is ambiguous; matches: {', '.join(matches)}"
+            )
+        return resolved
+
+    def list_categories(self) -> List[Tuple[str, str, int]]:
+        return [
+            (category.name, category.description, len(category.pairs))
+            for category in self.registry.list_categories()
+        ]
+
+    def log(self, message: str) -> None:
         if self.verbose:
-            print(f"[INFO] {message}")
-    
+            print(message)
+
     def find_blueprint_file(self, path: Path) -> Path:
-        """Find the bp.sbc file in the given path."""
-        if path.is_file() and path.name == 'bp.sbc':
+        """Find bp.sbc in file/folder input."""
+        if path.is_file() and path.name == "bp.sbc":
             return path
-        elif path.is_dir():
-            bp_file = path / 'bp.sbc'
+        if path.is_dir():
+            bp_file = path / "bp.sbc"
             if bp_file.exists():
                 return bp_file
-            # Search subdirectories
-            for item in path.rglob('bp.sbc'):
+            for item in path.rglob("bp.sbc"):
                 return item
         raise FileNotFoundError(f"Could not find bp.sbc in {path}")
-    
+
     def backup_file(self, file_path: Path) -> Path:
-        """Create a backup of the original file."""
-        backup_path = file_path.with_suffix('.sbc.backup')
+        backup_path = file_path.with_suffix(".sbc.backup")
         counter = 1
         while backup_path.exists():
-            backup_path = file_path.with_suffix(f'.sbc.backup{counter}')
+            backup_path = file_path.with_suffix(f".sbc.backup{counter}")
             counter += 1
-        
         import shutil
+
         shutil.copy2(file_path, backup_path)
-        self.log(f"Backup created: {backup_path}")
+        self.log(f"[INFO] Backup created: {backup_path}")
         return backup_path
-    
-    def replace_armor_blocks(self, tree: ET.ElementTree) -> int:
+
+    def replace_armor_blocks(self, tree: ET.ElementTree[ET.Element], dry_run: bool = False) -> int:
         """
-        Replace armor blocks in the XML tree based on the conversion mode.
-        Returns the number of replacements made.
+        Backward-compatible wrapper for replacement.
+        """
+        return self.replace_blocks(tree, dry_run=dry_run)
+
+    def replace_blocks(self, tree: ET.ElementTree[ET.Element], dry_run: bool = False) -> int:
+        """
+        Replace block subtype IDs according to the active mapping.
         """
         root = tree.getroot()
+        if root is None:
+            return 0
         replacements = 0
-        direction = "heavy->light" if self.reverse else "light->heavy"
-        
-        # Find all CubeBlocks sections
-        for cube_blocks in root.findall('.//CubeBlocks'):
-            for block in cube_blocks.findall('MyObjectBuilder_CubeBlock'):
+        self.change_log = []
+
+        for cube_blocks in root.findall(".//CubeBlocks"):
+            for block in cube_blocks.findall("MyObjectBuilder_CubeBlock"):
                 self.blocks_scanned += 1
-                
-                subtype_name = block.find('SubtypeName')
-                subtype_id = block.find('SubtypeId')
-                
+                subtype_name = block.find("SubtypeName")
+                subtype_id = block.find("SubtypeId")
+
                 current_subtype = None
-                matched_elem = None
-                
-                # Priority: Check SubtypeName first
                 if subtype_name is not None and subtype_name.text:
                     candidate = subtype_name.text.strip()
                     if candidate in self.mapping:
                         current_subtype = candidate
-                        matched_elem = subtype_name
-                
-                # If SubtypeName didn't match (or didn't exist), check SubtypeId
-                # BUT ONLY if SubtypeName didn't exist at all. 
-                # If SubtypeName exists but is not in mapping, we should NOT check SubtypeId
-                # to prevent false positives (e.g. modded blocks using vanilla SubtypeId).
                 elif subtype_name is None and subtype_id is not None and subtype_id.text:
                     candidate = subtype_id.text.strip()
                     if candidate in self.mapping:
                         current_subtype = candidate
-                        matched_elem = subtype_id
-                
+
                 if current_subtype is None:
                     continue
-                
+
                 new_subtype = self.mapping[current_subtype]
-                self.log(f"[{direction}] {current_subtype} -> {new_subtype}")
-                
-                # Update all present subtype elements to ensure consistency
-                if subtype_name is not None:
-                    subtype_name.text = new_subtype
-                if subtype_id is not None:
-                    subtype_id.text = new_subtype
-                    
+                self.change_log.append((current_subtype, new_subtype))
+                self.log(f"[MAP] {current_subtype} -> {new_subtype}")
+
+                if not dry_run:
+                    if subtype_name is not None:
+                        subtype_name.text = new_subtype
+                    if subtype_id is not None:
+                        subtype_id.text = new_subtype
                 replacements += 1
-        
+
         return replacements
-    
-    def process_blueprint(self, input_path: str, output_path: str = None, 
-                         create_backup: bool = True) -> Tuple[int, int]:
+
+    def process_blueprint(
+        self,
+        input_path: str,
+        output_path: Optional[str] = None,
+        create_backup: bool = True,
+        dry_run: bool = False,
+    ) -> Tuple[int, int]:
         """
-        Process a Space Engineers blueprint file.
-        
-        Args:
-            input_path: Path to the blueprint file or directory
-            output_path: Optional output path (if None, modifies in place)
-            create_backup: Whether to create a backup before modifying
-        
-        Returns:
-            Tuple of (blocks_scanned, replacements_made)
+        Process blueprint file and apply active mappings.
         """
         input_file = self.find_blueprint_file(Path(input_path))
-        self.log(f"Processing blueprint: {input_file}")
-        
-        # Reset counters for this run
+        self.log(f"[INFO] Processing blueprint: {input_file}")
+
         self.blocks_scanned = 0
         self.replacements_made = 0
+        self.change_log = []
 
-        # Parse the XML file
         try:
             tree = ET.parse(input_file)
-        except ET.ParseError as e:
-            raise ValueError(f"Failed to parse XML file: {e}")
-        
-        # Create backup if requested and modifying in place
+        except ET.ParseError as exc:
+            raise ValueError(f"Failed to parse XML file: {exc}") from exc
+
+        self.replacements_made = self.replace_blocks(tree, dry_run=dry_run)
+        if dry_run:
+            self.log(f"[INFO] Dry run complete: {self.replacements_made} blocks would change.")
+            return self.blocks_scanned, self.replacements_made
+
         if create_backup and output_path is None:
             self.backup_file(input_file)
-        
-        # Replace armor blocks
-        self.replacements_made = self.replace_armor_blocks(tree)
-        
-        # Determine output file
+
         if output_path:
             output_file = Path(output_path)
             output_file.parent.mkdir(parents=True, exist_ok=True)
         else:
             output_file = input_file
-        
-        # Write the modified XML
-        tree.write(output_file, encoding='utf-8', xml_declaration=True)
-        self.log(f"Output written to: {output_file}")
-        
-        # Check for and remove bp.sbcB5 (binary cache) if it exists in the same directory
-        # This is critical because the game prefers the binary file over the XML
+
+        tree.write(output_file, encoding="utf-8", xml_declaration=True)
+        self.log(f"[INFO] Output written: {output_file}")
+
         binary_file = output_file.with_name(output_file.stem + "B5")
         if binary_file.exists():
             try:
                 binary_file.unlink()
-                self.log(f"Removed binary cache file: {binary_file}")
-            except Exception as e:
-                self.log(f"Warning: Could not remove binary cache file {binary_file}: {e}")
+                self.log(f"[INFO] Removed binary cache file: {binary_file}")
+            except Exception as exc:
+                self.log(f"[WARN] Could not remove binary cache file {binary_file}: {exc}")
 
         return self.blocks_scanned, self.replacements_made
-    
+
     def get_replacement_summary(self) -> str:
-        """Get a summary of the replacement operation."""
-        direction = "heavy armor with light armor" if self.reverse else "light armor with heavy armor"
-        return (f"Scanned {self.blocks_scanned} blocks, "
-                f"replaced {self.replacements_made} {direction} blocks.")
+        normalized = [name.lower() for name in self.enabled_categories]
+        if normalized == ["armor"]:
+            direction = "heavy armor with light armor" if self.reverse else "light armor with heavy armor"
+            return (
+                f"Scanned {self.blocks_scanned} blocks, "
+                f"replaced {self.replacements_made} {direction} blocks."
+            )
+
+        direction = "reverse" if self.reverse else "forward"
+        return (
+            f"Scanned {self.blocks_scanned} blocks, replaced {self.replacements_made} "
+            f"blocks using {direction} mapping in categories: {', '.join(self.enabled_categories)}."
+        )
+
+    def get_dry_run_report(self) -> str:
+        if not self.change_log:
+            return "No changes would be made."
+
+        lines = [f"Dry-run report: {len(self.change_log)} block(s) would be changed:", ""]
+        counts: Dict[str, int] = {}
+        for old, new in self.change_log:
+            key = f"{old} -> {new}"
+            counts[key] = counts.get(key, 0) + 1
+        for change, count in sorted(counts.items()):
+            lines.append(f"  {change}  (x{count})")
+        return "\n".join(lines)
 
 
-def main():
-    """Main entry point for the script."""
+def _split_categories(raw: Optional[str], use_all: bool) -> Optional[List[str]]:
+    if use_all:
+        return ["all"]
+    if not raw:
+        return None
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def main() -> int:
     parser = argparse.ArgumentParser(
-        description='Replace armor blocks in Space Engineers blueprints (light to heavy or heavy to light)',
+        description=(
+            "Replace mapped blocks in Space Engineers blueprints "
+            "(default: armor light<->heavy)."
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Convert light to heavy armor (creates backup)
-  python se_armor_replacer.py path/to/blueprint/bp.sbc
-  
-  # Convert heavy to light armor
-  python se_armor_replacer.py path/to/blueprint/bp.sbc --reverse
-  
-  # Replace and save to a different file
-  python se_armor_replacer.py input.sbc -o output.sbc
-  
-  # Process without creating backup
-  python se_armor_replacer.py blueprint.sbc --no-backup
-  
-  # Verbose output
-  python se_armor_replacer.py blueprint.sbc -v
-        """
     )
-    
-    parser.add_argument('input', nargs='?', help='Path to blueprint file (bp.sbc) or directory containing it')
-    parser.add_argument('-o', '--output', help='Output file path (default: modify in place)')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
-    parser.add_argument('--no-backup', action='store_true', 
-                       help='Do not create backup file when modifying in place')
-    parser.add_argument('--reverse', action='store_true',
-                       help='Convert heavy armor to light (instead of light to heavy)')
-    parser.add_argument('--list-mappings', action='store_true',
-                       help='List all armor block mappings and exit')
-    
+    parser.add_argument("input", nargs="?", help="Path to bp.sbc or folder containing it")
+    parser.add_argument("-o", "--output", help="Output file path (default: modify in place)")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
+    parser.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="Do not create backup file when modifying in place",
+    )
+    parser.add_argument(
+        "--reverse",
+        action="store_true",
+        help="Reverse direction for selected mapping categories",
+    )
+    parser.add_argument("--dry-run", action="store_true", help="Preview changes without writing")
+    parser.add_argument("--list-mappings", action="store_true", help="List active mappings and exit")
+    parser.add_argument("--list-categories", action="store_true", help="List available categories")
+    parser.add_argument(
+        "--categories",
+        help="Comma-separated category names (default: armor). Use --all-categories for all.",
+    )
+    parser.add_argument(
+        "--all-categories",
+        action="store_true",
+        help="Enable all loaded categories for this run",
+    )
+    parser.add_argument(
+        "--profile-dir",
+        default="profiles",
+        help="Profile directory to auto-load (.sebx-profile / .json)",
+    )
+    parser.add_argument(
+        "--no-profiles",
+        action="store_true",
+        help="Disable profile auto-loading",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"SE Block Exchanger {__version__}",
+    )
+
     args = parser.parse_args()
-    
-    # Handle --list-mappings
-    if args.list_mappings:
-        print("Light Armor -> Heavy Armor Mappings:")
-        print("=" * 60)
-        for light, heavy in sorted(ArmorBlockReplacer.LIGHT_TO_HEAVY.items()):
-            print(f"{light:40} -> {heavy}")
-        print("\n\nHeavy Armor -> Light Armor Mappings:")
-        print("=" * 60)
-        for heavy, light in sorted(ArmorBlockReplacer.HEAVY_TO_LIGHT.items()):
-            print(f"{heavy:40} -> {light}")
+
+    categories = _split_categories(args.categories, args.all_categories)
+
+    try:
+        replacer = ArmorBlockReplacer(
+            verbose=args.verbose,
+            reverse=args.reverse,
+            enabled_categories=categories,
+            include_profiles=not args.no_profiles,
+            profile_dir=Path(args.profile_dir),
+        )
+    except Exception as exc:
+        print(f"Error initializing replacer: {exc}", file=sys.stderr)
+        return 1
+
+    if args.list_categories:
+        print("Available categories:")
+        for name, description, pair_count in replacer.list_categories():
+            enabled = " (active)" if name in replacer.enabled_categories else ""
+            print(f"  - {name}: {description} [{pair_count} pairs]{enabled}")
         return 0
-    
-    # Input required if not listing mappings
+
+    if args.list_mappings:
+        print("Active mappings:")
+        print("=" * 80)
+        for source, target in sorted(replacer.mapping.items()):
+            print(f"  {source:50} -> {target}")
+        print(f"\nTotal active pairs: {len(replacer.mapping)}")
+        print(f"Categories: {', '.join(replacer.enabled_categories)}")
+        return 0
+
     if not args.input:
         parser.print_help()
         return 1
-    
-    # Create replacer instance
-    replacer = ArmorBlockReplacer(verbose=args.verbose, reverse=args.reverse)
-    
+
     try:
-        # Process the blueprint
         blocks_scanned, replacements = replacer.process_blueprint(
             args.input,
-            args.output,
-            create_backup=not args.no_backup
+            output_path=args.output,
+            create_backup=not args.no_backup,
+            dry_run=args.dry_run,
         )
-        
-        # Print summary
-        mode = "Heavy->Light" if args.reverse else "Light->Heavy"
-        print(f"\n✓ Success! [{mode} conversion]")
-        print(f"  Blocks scanned: {blocks_scanned}")
-        print(f"  Replacements made: {replacements}")
-        
+
+        mode = "reverse" if args.reverse else "forward"
+        if args.dry_run:
+            print("\n" + "=" * 60)
+            print(f"DRY RUN [{mode}]")
+            print("=" * 60)
+            print(f"Blocks scanned: {blocks_scanned}")
+            print(f"Blocks that would change: {replacements}")
+            if replacements > 0:
+                print("")
+                print(replacer.get_dry_run_report())
+            print("\nNo files were modified.")
+        else:
+            print(f"\nSuccess! [{mode}]")
+            print(f"Blocks scanned: {blocks_scanned}")
+            print(f"Replacements made: {replacements}")
+            print(f"Categories: {', '.join(replacer.enabled_categories)}")
+
         if replacements == 0:
-            source_type = "heavy" if args.reverse else "light"
-            print(f"\n  No {source_type} armor blocks found to replace.")
-        
+            print("\nNo matching mapped blocks were found for the selected categories.")
         return 0
-        
-        return 0
-        
-    except FileNotFoundError as e:
-        print(f"✗ Error: {e}", file=sys.stderr)
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
         return 1
-    except ValueError as e:
-        print(f"✗ Error: {e}", file=sys.stderr)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
         return 1
-    except Exception as e:
-        print(f"✗ Unexpected error: {e}", file=sys.stderr)
+    except Exception as exc:
+        print(f"Unexpected error: {exc}", file=sys.stderr)
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

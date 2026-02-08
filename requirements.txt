@@ -1,3 +1,4 @@
-# Space Engineers Armor Block Replacer
-# No external dependencies are required.
-# The command-line and tkinter GUI both rely only on the Python standard library.
+customtkinter>=5.2.0
+
+# Optional dependencies
+Pillow>=10.0.0

@@ -1,0 +1,47 @@
+{
+  "name": "Assertive Armaments",
+  "author": "Meraby Labs",
+  "version": "1.0",
+  "description": "Example community profile for military weapon swaps.",
+  "game_version": "1.205+",
+  "categories": [
+    {
+      "name": "AA Large Weapons",
+      "description": "Large-grid substitutions for Assertive Armaments arsenals.",
+      "grid_sizes": [
+        "Large"
+      ],
+      "pairs": [
+        [
+          "LargeGatlingTurret",
+          "AA_HeavyGatlingTurret"
+        ],
+        [
+          "LargeMissileTurret",
+          "AA_StormLauncher"
+        ],
+        [
+          "LargeCalibreTurret",
+          "AA_SiegeTurret"
+        ]
+      ]
+    },
+    {
+      "name": "AA Small Weapons",
+      "description": "Small-grid substitutions for Assertive Armaments arsenals.",
+      "grid_sizes": [
+        "Small"
+      ],
+      "pairs": [
+        [
+          "SmallGatlingGun",
+          "AA_SmallGatling"
+        ],
+        [
+          "SmallMissileLauncher",
+          "AA_MicroMissileLauncher"
+        ]
+      ]
+    }
+  ]
+}

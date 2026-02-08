@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+      - name: Install dependencies
+      shell: pwsh
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller pytest
+
+      - name: Validate tag matches version.py
+      shell: pwsh
+      run: |
+        $tag = "${{ github.ref_name }}"
+        $version = python -c "from version import __version__; print(__version__)"
+        if ($tag -ne "v$version") {
+          throw "Tag ($tag) does not match version.py (v$version)"
+        }
+
+      - name: Run tests
+      shell: pwsh
+      run: pytest -q
+
+      - name: Build executable
+      shell: pwsh
+      run: |
+        $version = python -c "from version import __version__; print(__version__)"
+        pyinstaller --noconfirm --onefile --windowed `
+          --name "SE_Tactical_Command_v$version" `
+          --icon "app_icon.ico" `
+          --add-data "README.md;." `
+          --add-data "LICENSE;." `
+          --add-data "RELEASE_NOTES.md;." `
+          --add-data "profiles;profiles" `
+          --add-data "data;data" `
+          gui_standalone.py
+
+      - name: Create release changelog body
+      shell: pwsh
+      run: |
+        Copy-Item RELEASE_NOTES.md release_body.md
+
+      - name: Publish GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        body_path: release_body.md
+        files: |
+          dist/*.exe
+

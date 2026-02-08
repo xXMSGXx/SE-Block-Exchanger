@@ -1,0 +1,43 @@
+name: Bug Report
+description: Report a reproducible defect.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Provide exact steps, files, and settings.
+      placeholder: |
+        1. Open ...
+        2. Select ...
+        3. Run ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Traceback
+      description: Paste terminal or UI error messages.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: App Version
+      placeholder: "3.0.0"
+    validations:
+      required: true
+  - type: input
+    id: se_version
+    attributes:
+      label: Space Engineers Version
+      placeholder: "1.205+"
+

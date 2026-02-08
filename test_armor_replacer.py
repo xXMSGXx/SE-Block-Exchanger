@@ -8,6 +8,7 @@ from pathlib import Path
 import tempfile
 import shutil
 from se_armor_replacer import ArmorBlockReplacer
+from blueprint_scanner import BlueprintScanner
 
 
 class TestArmorBlockReplacer(unittest.TestCase):
@@ -207,6 +208,116 @@ class TestArmorMappings(unittest.TestCase):
         # Check for duplicate values
         values = list(mappings.values())
         self.assertEqual(len(values), len(set(values)))
+
+
+class TestReverseMode(unittest.TestCase):
+    """Test cases for heavy-to-light (reverse) conversion."""
+    
+    def setUp(self):
+        self.replacer = ArmorBlockReplacer(verbose=False, reverse=True)
+        self.test_dir = Path(tempfile.mkdtemp())
+    
+    def tearDown(self):
+        if self.test_dir.exists():
+            shutil.rmtree(self.test_dir)
+    
+    def _make_bp(self, blocks):
+        root = ET.Element('Definitions')
+        ship = ET.SubElement(ET.SubElement(root, 'ShipBlueprints'), 'ShipBlueprint')
+        cubes = ET.SubElement(ship, 'CubeBlocks')
+        for name in blocks:
+            b = ET.SubElement(cubes, 'MyObjectBuilder_CubeBlock')
+            ET.SubElement(b, 'SubtypeId').text = name
+            ET.SubElement(b, 'SubtypeName').text = name
+        path = self.test_dir / 'bp.sbc'
+        ET.ElementTree(root).write(path, encoding='utf-8', xml_declaration=True)
+        return path
+    
+    def test_heavy_to_light_basic(self):
+        """Reverse mode converts heavy blocks to light."""
+        path = self._make_bp(['LargeHeavyBlockArmorBlock', 'SmallHeavyBlockArmorSlope'])
+        scanned, replaced = self.replacer.process_blueprint(str(path), create_backup=False)
+        self.assertEqual(replaced, 2)
+        tree = ET.parse(path)
+        ids = [e.text for e in tree.findall('.//SubtypeId')]
+        self.assertIn('LargeBlockArmorBlock', ids)
+        self.assertIn('SmallBlockArmorSlope', ids)
+    
+    def test_reverse_ignores_light_blocks(self):
+        """Reverse mode does not touch light armor blocks."""
+        path = self._make_bp(['LargeBlockArmorBlock', 'SmallReactor'])
+        _, replaced = self.replacer.process_blueprint(str(path), create_backup=False)
+        self.assertEqual(replaced, 0)
+    
+    def test_reverse_all_heavy_types(self):
+        """Reverse mode handles every heavy mapping."""
+        heavy_blocks = list(ArmorBlockReplacer.HEAVY_TO_LIGHT.keys())
+        path = self._make_bp(heavy_blocks)
+        scanned, replaced = self.replacer.process_blueprint(str(path), create_backup=False)
+        self.assertEqual(replaced, len(heavy_blocks))
+
+
+class TestDryRun(unittest.TestCase):
+    """Test cases for dry-run (preview) mode."""
+    
+    def setUp(self):
+        self.replacer = ArmorBlockReplacer(verbose=False)
+        self.test_dir = Path(tempfile.mkdtemp())
+    
+    def tearDown(self):
+        if self.test_dir.exists():
+            shutil.rmtree(self.test_dir)
+    
+    def _make_bp(self, blocks):
+        root = ET.Element('Definitions')
+        ship = ET.SubElement(ET.SubElement(root, 'ShipBlueprints'), 'ShipBlueprint')
+        cubes = ET.SubElement(ship, 'CubeBlocks')
+        for name in blocks:
+            b = ET.SubElement(cubes, 'MyObjectBuilder_CubeBlock')
+            ET.SubElement(b, 'SubtypeId').text = name
+            ET.SubElement(b, 'SubtypeName').text = name
+        path = self.test_dir / 'bp.sbc'
+        ET.ElementTree(root).write(path, encoding='utf-8', xml_declaration=True)
+        return path
+    
+    def test_dry_run_does_not_modify(self):
+        """Dry-run must not alter the file content."""
+        path = self._make_bp(['LargeBlockArmorBlock'])
+        original = path.read_bytes()
+        self.replacer.process_blueprint(str(path), create_backup=False, dry_run=True)
+        self.assertEqual(path.read_bytes(), original)
+    
+    def test_dry_run_report(self):
+        """Dry-run report lists the planned changes."""
+        path = self._make_bp(['LargeBlockArmorBlock', 'LargeBlockArmorBlock',
+                              'SmallBlockArmorSlope'])
+        self.replacer.process_blueprint(str(path), create_backup=False, dry_run=True)
+        report = self.replacer.get_dry_run_report()
+        self.assertIn('LargeBlockArmorBlock', report)
+        self.assertIn('LargeHeavyBlockArmorBlock', report)
+
+
+class TestExtendedMappings(unittest.TestCase):
+    """Tests for expanded / DLC block mappings and cross-module consistency."""
+    
+    def test_extended_mappings_exist(self):
+        """Verify DLC / decorative shapes are present."""
+        m = ArmorBlockReplacer.LIGHT_TO_HEAVY
+        # Spot-check a handful of extended shapes
+        self.assertIn('LargeBlockArmorHalfSlopeCorner', m)
+        self.assertIn('SmallBlockArmorRoundedSlope', m)
+    
+    def test_reverse_mapping_completeness(self):
+        """Every HEAVY_TO_LIGHT key must appear as a value in LIGHT_TO_HEAVY."""
+        for heavy in ArmorBlockReplacer.HEAVY_TO_LIGHT:
+            self.assertIn(heavy, ArmorBlockReplacer.LIGHT_TO_HEAVY.values())
+    
+    def test_scanner_block_sets_match_replacer(self):
+        """BlueprintScanner block sets must be derived from ArmorBlockReplacer."""
+        self.assertEqual(BlueprintScanner.LIGHT_ARMOR_BLOCKS,
+                         set(ArmorBlockReplacer.LIGHT_TO_HEAVY.keys()))
+        self.assertEqual(BlueprintScanner.HEAVY_ARMOR_BLOCKS,
+                         set(ArmorBlockReplacer.LIGHT_TO_HEAVY.values()))
 
 
 if __name__ == '__main__':
