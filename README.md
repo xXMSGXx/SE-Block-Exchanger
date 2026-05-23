@@ -108,6 +108,7 @@ Built-in categories:
 - `thrusters`
 - `weapons`
 - `functional`
+- `dlc_substitution` (Vanilla-fies blueprints by upgrading/substituting premium DLC blocks with base-game equivalents)
 
 Profiles auto-load from `profiles/` at startup.
 
@@ -121,20 +122,28 @@ Built-in mod profile files shipped:
 
 - Header: branding, recent directories, appearance mode, profile/changelog access
 - Left panel: blueprint cards with status badges, search, recent picks
-- Center panel: INTEL / XML / PREVIEW DIFF / ANALYTICS tabs
+- Center panel: INTEL / XML / PREVIEW DIFF / ANALYTICS / SE2 TRANSITION tabs
 - Right panel: conversion mode, category toggles, progress ring, batch + undo controls
 - Footer: status telemetry, version/build metadata, update notification
+
+## SE2 Transition & Utilities
+
+Our new release adds support for preparing your creations for **Space Engineers 2** (VRage 3 Engine):
+- **SE2 Readiness Score:** Audits your blueprint for scripts, mechanical chains (pistons/rotors/hinges), and DLC footprints, calculating a readiness score.
+- **DLC to Base Convert (Vanilla-fyer):** Replaces DLC blocks with standard vanilla alternatives so anyone can load your blueprints without buying extra DLC packs.
+- **Grid Rescaler (Large <-> Small Grid):** Automatically scales block types and coordinates between Large and Small grids.
 
 ## Testing
 
 Run full suite:
 
 ```bash
-pytest -q
+python -m unittest discover -v
 ```
 
 Current suite covers:
-
+- Space Engineers 2 readiness scanning and grid size scaling (new)
+- DLC substitution category validations (new)
 - legacy conversion behavior (19 compatibility tests)
 - mapping registry validation
 - profile management

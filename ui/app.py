@@ -167,6 +167,8 @@ class TacticalCommandCenter(ctk.CTk):
             on_export_csv=self.export_comparison_csv,
             on_export_txt=self.export_comparison_txt,
             on_apply_fix=self.apply_health_fix,
+            on_vanillafy=self.vanillafy_blueprint,
+            on_scale_grid=self.scale_grid_choice,
         )
         self.preview_panel.grid(row=0, column=1, sticky="nsew", padx=3)
 
@@ -523,6 +525,108 @@ class TacticalCommandCenter(ctk.CTk):
         self.footer.set_status("ERROR", TacticalTheme.RED_PRIMARY)
         self.toasts.toast(f"Conversion failed: {error_msg}", level="error", duration=5000)
 
+    def vanillafy_blueprint(self):
+        if not self.selected_blueprint:
+            return
+        bp = self.selected_blueprint
+
+        confirm = messagebox.askyesno(
+            "Vanilla-fy Blueprint",
+            f"Replace all premium DLC blocks in '{bp.display_name}' with their base game (Vanilla) counterparts?\n\n"
+            f"This will create a new prefixed blueprint folder (e.g. CONVERTED_{bp.name}).",
+            icon="question",
+        )
+        if not confirm:
+            return
+
+        self.control_panel.set_convert_enabled(False)
+        self.control_panel.progress.start_indeterminate("Converting DLC blocks to base...")
+        self.footer.set_status("VANILLA-FYING...")
+
+        # Build a temporary converter specifically for DLC substitution
+        dlc_converter = BlueprintConverter(
+            verbose=False,
+            reverse=False,
+            enabled_categories=["dlc_substitution"],
+            include_profiles=True,
+            profile_dir=Path("profiles"),
+        )
+
+        def task():
+            try:
+                dest, scanned, converted = dlc_converter.create_converted_blueprint(bp.path)
+                self.after(0, lambda: self._on_vanillafy_complete(dest, scanned, converted))
+            except Exception as exc:
+                error_message = str(exc)
+                self.after(0, lambda msg=error_message: self._on_conversion_error(msg))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_vanillafy_complete(self, dest_path: Path, scanned: int, converted: int):
+        self.control_panel.progress.stop()
+        self._converted_count += converted
+        self._undo_stack.append(dest_path)
+        self.footer.set_scanned(scanned)
+        self.footer.set_converted(self._converted_count)
+        self.footer.set_status("DLC CONVERT COMPLETE")
+        self._update_convert_state()
+
+        self.preview_panel.load_xml(dest_path / "bp.sbc", f"VANILLA-FIED: {dest_path.name}")
+        self.preview_panel.switch_to_xml()
+        self.toasts.toast(
+            f"Vanilla-fied {converted} DLC block(s) successfully.",
+            level="success",
+        )
+        self.load_blueprints_async()
+
+    def scale_grid_choice(self):
+        if not self.selected_blueprint:
+            return
+        bp = self.selected_blueprint
+        
+        current_grid = bp.grid_size if bp.grid_size in ("Large", "Small") else "Large"
+        suggested_grid = "Small" if current_grid == "Large" else "Large"
+        
+        confirm = messagebox.askyesno(
+            "Rescale Grid Size",
+            f"Would you like to auto-scale grid size for '{bp.display_name}' from {current_grid} Grid to {suggested_grid} Grid?\n\n"
+            f"This transfers all block subtypes and dimensions to {suggested_grid} equivalents and sets the grid property.",
+            icon="question",
+        )
+        if not confirm:
+            return
+
+        self.control_panel.set_convert_enabled(False)
+        self.control_panel.progress.start_indeterminate(f"Rescaling grid to {suggested_grid}...")
+        self.footer.set_status("RESCALING...")
+
+        def task():
+            try:
+                dest, scanned, converted = self.converter.scale_grid_size(bp.path, suggested_grid)
+                self.after(0, lambda: self._on_scale_complete(dest, scanned, converted, suggested_grid))
+            except Exception as exc:
+                error_message = str(exc)
+                self.after(0, lambda msg=error_message: self._on_conversion_error(msg))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_scale_complete(self, dest_path: Path, scanned: int, converted: int, target_grid: str):
+        self.control_panel.progress.stop()
+        self._converted_count += converted
+        self._undo_stack.append(dest_path)
+        self.footer.set_scanned(scanned)
+        self.footer.set_converted(self._converted_count)
+        self.footer.set_status(f"SCALED TO {target_grid.upper()}")
+        self._update_convert_state()
+
+        self.preview_panel.load_xml(dest_path / "bp.sbc", f"SCALED: {dest_path.name}")
+        self.preview_panel.switch_to_xml()
+        self.toasts.toast(
+            f"Successfully scaled entire blueprint grid size to {target_grid} with {converted} blocks updated.",
+            level="success",
+        )
+        self.load_blueprints_async()
+
     def batch_convert(self):
         selected_bps = self.blueprint_panel.get_selected_blueprints()
         if not selected_bps:
@@ -684,6 +788,23 @@ class TacticalCommandCenter(ctk.CTk):
         self._latest_analytics = analytics
         self._latest_comparison = comparison
         self.preview_panel.update_analytics(analytics, comparison)
+
+        # Compute SE2 Readiness metrics
+        dlc_keywords = ["scifi", "industrial", "wasteland", "warfare", "reskin", "decorative", "desert", "cab", "buggy", "sparks", "vending", "storeblock"]
+        dlc_count = 0
+        script_count = 0
+        subgrid_count = 0
+        
+        for subtype, qty in analytics.block_counts.items():
+            subtype_lower = subtype.lower()
+            if any(kw in subtype_lower for kw in dlc_keywords):
+                dlc_count += qty
+            if "programmable" in subtype_lower:
+                script_count += qty
+            if any(kw in subtype_lower for kw in ["rotor", "stator", "hinge", "piston"]):
+                subgrid_count += qty
+                
+        self.preview_panel.update_se2_transition(self.selected_blueprint, dlc_count, script_count, subgrid_count)
 
     def export_comparison_csv(self):
         if not self._latest_comparison:

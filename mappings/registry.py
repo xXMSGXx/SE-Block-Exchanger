@@ -117,7 +117,7 @@ class MappingRegistry:
                         f"Duplicate source '{source}' across categories "
                         f"({merged[source]} vs {target})"
                     )
-                if target in target_to_source and target_to_source[target] != source:
+                if reverse and target in target_to_source and target_to_source[target] != source:
                     raise MappingValidationError(
                         f"Duplicate target '{target}' across categories "
                         f"({target_to_source[target]} and {source})"
@@ -125,11 +125,11 @@ class MappingRegistry:
                 merged[source] = target
                 target_to_source[target] = source
 
-        self.validate_pairs(merged)
+        self.validate_pairs(merged, allow_duplicate_targets=not reverse)
         return merged
 
     @staticmethod
-    def validate_pairs(pairs: Dict[str, str]) -> None:
+    def validate_pairs(pairs: Dict[str, str], allow_duplicate_targets: bool = True) -> None:
         if not pairs:
             return
 
@@ -139,7 +139,7 @@ class MappingRegistry:
                 raise MappingValidationError("Mappings cannot contain empty source/target values")
             if source == target:
                 raise MappingValidationError(f"Identity mapping is not allowed: {source} -> {target}")
-            if target in targets:
+            if not allow_duplicate_targets and target in targets:
                 raise MappingValidationError(f"Duplicate target detected in merged mapping: {target}")
             targets.add(target)
 
@@ -168,12 +168,14 @@ def build_registry(include_builtin: bool = True) -> MappingRegistry:
         from mappings.functional import get_category as get_functional
         from mappings.thrusters import get_category as get_thrusters
         from mappings.weapons import get_category as get_weapons
+        from mappings.dlc_substitution import get_category as get_dlc_sub
 
         for category in (
             get_armor(),
             get_thrusters(),
             get_weapons(),
             get_functional(),
+            get_dlc_sub(),
         ):
             registry.register(category)
     return registry
