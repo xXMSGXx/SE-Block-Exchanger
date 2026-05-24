@@ -1,104 +1,126 @@
-# Space Engineers Block Exchanger v3.0
+# Space Engineers Block Exchanger
 
-By Meraby Labs
+**A Meraby Labs product. Proprietary software. Free for personal, non-commercial use. Commercial use requires a license.**
 
-[![CI](https://github.com/Meraby-Labs/se-block-exchanger/actions/workflows/ci.yml/badge.svg)](https://github.com/Meraby-Labs/se-block-exchanger/actions/workflows/ci.yml)
-[![Release](https://github.com/Meraby-Labs/se-block-exchanger/actions/workflows/release.yml/badge.svg)](https://github.com/Meraby-Labs/se-block-exchanger/actions/workflows/release.yml)
+[![CI](https://github.com/MerabyLabs/SE-Block-Exchanger/actions/workflows/ci.yml/badge.svg)](https://github.com/MerabyLabs/SE-Block-Exchanger/actions/workflows/ci.yml)
+[![Release](https://github.com/MerabyLabs/SE-Block-Exchanger/actions/workflows/release.yml/badge.svg)](https://github.com/MerabyLabs/SE-Block-Exchanger/actions/workflows/release.yml)
 
-SE Block Exchanger is a desktop + CLI toolkit for Space Engineers blueprint engineering:
+Space Engineers Block Exchanger ("SEBX") is a Windows desktop and CLI toolkit, developed and owned by **Meraby Labs**, for converting and analysing Space Engineers blueprints.
 
-- Multi-category block conversion (armor, thrusters, weapons, functional)
-- Modular mapping registry with profile support
-- Blueprint analytics (ores, ingots, components, PCU, mass, category distribution)
+- Multi-category block conversion (armor, thrusters, weapons, functional, DLC substitution)
+- Modular mapping registry with shareable profiles
+- Blueprint analytics: ores, ingots, components, PCU, mass, category distribution
 - Dry-run diff preview and conversion cost delta reporting
 - Profile editor with import/export/share and sample-blueprint testing
-- Update checker, changelog viewer, and automated CI/release pipelines
+- Space Engineers 2 (VRage 3) readiness audit, DLC -> Base vanillafyer, grid rescaler
+- Update checker and changelog viewer
+- Hardened XML parsing (defusedxml), SHA-256 release checksums
 
-## Requirements
+> Space Engineers is a trademark of Keen Software House. This product is not affiliated with or endorsed by Keen Software House.
 
-- Python 3.8+
-- `customtkinter`
-- Optional: `Pillow` for logo/icon workflows
+---
 
-Install:
+## License at a Glance
 
-```bash
-pip install -r requirements.txt
-```
+| Use case | Allowed? |
+|---|---|
+| Personal use on your own blueprints | Yes, free |
+| Use in private community servers (non-revenue) | Yes, free |
+| Streaming / video content where SEBX is a minor incidental tool | Yes, free |
+| Commercial deployment, paid services, enterprise rollout | **Requires commercial license** |
+| Bundling SEBX into a paid product or paid mod pack | **Requires commercial license** |
+| Redistributing the binaries or source | **No** |
+| Forking and publishing modified versions | **No** |
+| Repackaging or mirroring releases | **No** |
+
+Full terms: see [LICENSE](LICENSE). For commercial licensing inquiries contact Meraby Labs.
+
+---
+
+## Download
+
+Official builds are published only at the Meraby Labs GitHub Releases page:
+<https://github.com/MerabyLabs/SE-Block-Exchanger/releases>
+
+Each release ships:
+
+- `SE_Tactical_Command_v<version>.exe` — Windows portable build
+- `SHA256SUMS.txt` — verify your download with `Get-FileHash`
+
+Do not trust copies obtained from any other source.
+
+---
 
 ## Quick Start
 
-GUI:
+### GUI (recommended)
 
-```bash
+Double-click `launch_gui.bat`, or:
+
+```powershell
 python gui_standalone.py
 ```
 
-CLI (backward compatible):
+### CLI
 
-```bash
-python se_armor_replacer.py path/to/blueprint/bp.sbc
+```powershell
+python se_armor_replacer.py path\to\blueprint\bp.sbc
 ```
 
-## CLI Usage
+---
 
-Light -> Heavy armor (default category = `armor`):
+## Requirements (running from source)
 
-```bash
+- Windows 10/11
+- Python 3.11 or 3.12
+- `customtkinter`
+- `defusedxml`
+- Optional: `Pillow` for logo/icon utilities
+
+Install dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+---
+
+## CLI Reference
+
+```powershell
+# Default: Light -> Heavy armor conversion
 python se_armor_replacer.py <path>
-```
 
-Reverse conversion:
-
-```bash
+# Reverse conversion
 python se_armor_replacer.py <path> --reverse
-```
 
-Dry-run:
-
-```bash
+# Preview changes without modifying the blueprint
 python se_armor_replacer.py <path> --dry-run
-```
 
-Enable additional categories:
-
-```bash
+# Enable additional categories
 python se_armor_replacer.py <path> --categories armor,thrusters,weapons,functional
-```
 
-List categories and mappings:
-
-```bash
+# Inspect mapping registry
 python se_armor_replacer.py --list-categories
 python se_armor_replacer.py --list-mappings --categories armor,thrusters
 ```
 
-## GUI Feature Set
+---
+
+## GUI Highlights
 
 - CustomTkinter modular UI (`ui/` package)
 - Category toggles for conversion mapping selection
-- Keyboard shortcuts:
-  - `Ctrl+O` browse blueprint directory
-  - `Ctrl+R` run conversion
-  - `Ctrl+Z` undo last conversion
-- Recent blueprint directories and recent blueprint quick access
-- Native Windows drag-and-drop for blueprint file/folder loading
+- Keyboard shortcuts: `Ctrl+O` open, `Ctrl+R` run, `Ctrl+Z` undo
+- Recent blueprint directories and quick access
+- Native Windows drag-and-drop loading
 - Before/after diff preview
-- Analytics dashboard with:
-  - PCU/mass counters
-  - category distribution chart
-  - ore -> ingot -> component -> block tree
-  - conversion deltas
-  - health audit with fix actions
+- Analytics dashboard: PCU/mass counters, category distribution, ore -> ingot -> component -> block tree, conversion deltas, health audit with fix actions
 - CSV/TXT analytics export
-- Profile editor dialog:
-  - create/edit/duplicate profiles
-  - add/remove mapping pairs with known subtype suggestions
-  - test profile against selected blueprint
-  - import/export `.sebx-profile`
-  - import profile from URL
-  - Discord share payload copy
+- Profile editor: create/edit/duplicate, add/remove pairs with subtype suggestions, test against blueprint, import/export `.sebx-profile`, import from URL, Discord share payload
 - In-app changelog and update notifications
+
+---
 
 ## Mapping Registry
 
@@ -108,64 +130,46 @@ Built-in categories:
 - `thrusters`
 - `weapons`
 - `functional`
-- `dlc_substitution` (Vanilla-fies blueprints by upgrading/substituting premium DLC blocks with base-game equivalents)
+- `dlc_substitution` (vanillafies blueprints by replacing premium DLC blocks with base-game equivalents)
 
-Profiles auto-load from `profiles/` at startup.
-
-Built-in mod profile files shipped:
+Profiles auto-load from `profiles/` at startup. Bundled mod profiles:
 
 - `profiles/weaponcore.sebx-profile`
 - `profiles/assertive_armaments.sebx-profile`
 - `profiles/build_vision.sebx-profile`
 
-## UI Gallery
+---
 
-- Header: branding, recent directories, appearance mode, profile/changelog access
-- Left panel: blueprint cards with status badges, search, recent picks
-- Center panel: INTEL / XML / PREVIEW DIFF / ANALYTICS / SE2 TRANSITION tabs
-- Right panel: conversion mode, category toggles, progress ring, batch + undo controls
-- Footer: status telemetry, version/build metadata, update notification
+## SE2 Transition Utilities
 
-## SE2 Transition & Utilities
+Prepare creations for **Space Engineers 2** (VRage 3 Engine):
 
-Our new release adds support for preparing your creations for **Space Engineers 2** (VRage 3 Engine):
-- **SE2 Readiness Score:** Audits your blueprint for scripts, mechanical chains (pistons/rotors/hinges), and DLC footprints, calculating a readiness score.
-- **DLC to Base Convert (Vanilla-fyer):** Replaces DLC blocks with standard vanilla alternatives so anyone can load your blueprints without buying extra DLC packs.
-- **Grid Rescaler (Large <-> Small Grid):** Automatically scales block types and coordinates between Large and Small grids.
+- **SE2 Readiness Score** — audits scripts, mechanical chains (pistons/rotors/hinges), and DLC footprint, producing a readiness score.
+- **DLC -> Base Convert (Vanillafyer)** — replaces DLC blocks with vanilla alternatives so blueprints load for everyone.
+- **Grid Rescaler (Large <-> Small Grid)** — scales block types and coordinates between grid sizes.
 
-## Testing
+---
 
-Run full suite:
+## Security
 
-```bash
-python -m unittest discover -v
-```
+- XML parsed via `defusedxml` to prevent XXE and entity-expansion attacks.
+- Release pipeline pins all GitHub Actions to commit SHAs and publishes SHA-256 checksums alongside every binary.
+- Dependabot keeps Actions and Python dependencies updated.
 
-Current suite covers:
-- Space Engineers 2 readiness scanning and grid size scaling (new)
-- DLC substitution category validations (new)
-- legacy conversion behavior (19 compatibility tests)
-- mapping registry validation
-- profile management
-- analytics and export
-- update checker cache behavior
+Report security issues privately to Meraby Labs (do not open a public issue).
 
-## Packaging and Release
+---
+
+## Packaging and Release (internal)
 
 - CI workflow: `.github/workflows/ci.yml`
-- Release workflow: `.github/workflows/release.yml` (tag `vX.Y.Z`)
+- Release workflow: `.github/workflows/release.yml` (triggered by tag `vX.Y.Z`)
 - Version source of truth: `version.py`
 
-## Contributing and Community
+---
 
-- Contributing: `CONTRIBUTING.md`
-- Code of conduct: `CODE_OF_CONDUCT.md`
-- Issue templates:
-  - bug report
-  - feature request
-  - mapping request
+## Trademarks and Ownership
 
-## License
+"Meraby Labs", the Meraby Labs logo, and "Space Engineers Block Exchanger" are trademarks of Meraby Labs. All other trademarks are the property of their respective owners.
 
-See `LICENSE`.
-
+(c) 2025-2026 Meraby Labs. All Rights Reserved. See [LICENSE](LICENSE) for full terms.
