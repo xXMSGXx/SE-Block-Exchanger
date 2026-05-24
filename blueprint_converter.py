@@ -161,8 +161,8 @@ class BlueprintConverter:
         new_bp_file = dest_path / "bp.sbc"
         
         # Parse XML, scale the grid size and swap subtypes!
-        import xml.etree.ElementTree as ET
-        tree = ET.parse(new_bp_file)
+        import safe_xml
+        tree = safe_xml.parse(new_bp_file)
         root = tree.getroot()
         
         # 1. Update GridSizeEnum

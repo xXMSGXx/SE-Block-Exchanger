@@ -39,12 +39,17 @@ def _default_cache_path() -> Path:
 class UpdateChecker:
     """Checks GitHub Releases API for new versions."""
 
+    # owner/repo — both segments restricted to GitHub-allowed characters.
+    _REPO_PATTERN = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
+
     def __init__(
         self,
         repo: str = "Meraby-Labs/se-block-exchanger",
         cache_path: Optional[Path] = None,
         cache_hours: int = 24,
     ):
+        if not self._REPO_PATTERN.match(repo):
+            raise ValueError(f"Invalid repo identifier: {repo!r}")
         self.repo = repo
         self.cache_path = Path(cache_path) if cache_path else _default_cache_path()
         self.cache_path.parent.mkdir(parents=True, exist_ok=True)

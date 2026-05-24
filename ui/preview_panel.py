@@ -768,7 +768,7 @@ class PreviewPanel(ctk.CTkFrame):
         self.se2_status_desc.configure(text=desc)
         
         log_text = []
-        log_text.append(f"=== VRAGE3 (SE2) TRANSITION ASSESSMENT ===")
+        log_text.append("=== VRAGE3 (SE2) TRANSITION ASSESSMENT ===")
         log_text.append(f"Blueprint: {info.display_name}")
         log_text.append(f"Grid Size: {info.grid_size}")
         log_text.append(f"Total Blocks: {info.block_count}")

@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
+import safe_xml
 from mapping_profiles import ProfileManager
 from mappings import MappingRegistry, build_registry
 from mappings.armor import ARMOR_PAIRS
@@ -196,7 +197,7 @@ class ArmorBlockReplacer:
         self.change_log = []
 
         try:
-            tree = ET.parse(input_file)
+            tree = safe_xml.parse(input_file)
         except ET.ParseError as exc:
             raise ValueError(f"Failed to parse XML file: {exc}") from exc
 

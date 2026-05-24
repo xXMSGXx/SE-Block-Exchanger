@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Set
 
+import safe_xml
+
 
 SEVERITY_INFO = "Info"
 SEVERITY_WARNING = "Warning"
@@ -171,7 +173,7 @@ class BlueprintAnalyticsEngine:
         self.db = BlockCostDatabase(cost_db_path)
 
     def analyze_blueprint(self, blueprint_file: Path) -> BlueprintAnalyticsResult:
-        tree = ET.parse(blueprint_file)
+        tree = safe_xml.parse(blueprint_file)
         root = tree.getroot()
         grid_size = self._detect_grid_size(root)
 
@@ -355,7 +357,7 @@ class BlueprintAnalyticsEngine:
         return destination
 
     def apply_fix(self, blueprint_file: Path, fix_id: str) -> bool:
-        tree = ET.parse(blueprint_file)
+        tree = safe_xml.parse(blueprint_file)
         root = tree.getroot()
         cube_blocks = root.find(".//CubeGrid/CubeBlocks")
         if cube_blocks is None:

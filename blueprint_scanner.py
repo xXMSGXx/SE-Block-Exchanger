@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
+import safe_xml
 from mappings import MappingRegistry, build_registry
 from se_armor_replacer import ArmorBlockReplacer
 
@@ -110,7 +111,7 @@ class BlueprintScanner:
         return blueprints
 
     def _parse_blueprint(self, folder_path: Path, bp_file: Path) -> BlueprintInfo:
-        tree = ET.parse(bp_file)
+        tree = safe_xml.parse(bp_file)
         root = tree.getroot()
 
         display_name = folder_path.name
