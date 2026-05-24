@@ -201,15 +201,7 @@ class TacticalCommandCenter(ctk.CTk):
         help_menu.add_command(label="Discord", command=lambda: webbrowser.open("https://discord.com/"))
         help_menu.add_command(
             label="Report an Issue",
-            command=lambda: webbrowser.open("https://github.com/Meraby-Labs/se-block-exchanger/issues"),
-        )
-        help_menu.add_command(
-            label="Contributing Guide",
-            command=lambda: webbrowser.open("https://github.com/Meraby-Labs/se-block-exchanger/blob/main/CONTRIBUTING.md"),
-        )
-        help_menu.add_command(
-            label="Code of Conduct",
-            command=lambda: webbrowser.open("https://github.com/Meraby-Labs/se-block-exchanger/blob/main/CODE_OF_CONDUCT.md"),
+            command=lambda: webbrowser.open("https://github.com/MerabyLabs/SE-Block-Exchanger/issues"),
         )
         menubar.add_cascade(label="Help", menu=help_menu)
         self.configure(menu=menubar)

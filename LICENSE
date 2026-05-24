@@ -1,64 +1,108 @@
-Copyright © 2025–2026 Meraby Labs. All Rights Reserved.
+SPACE ENGINEERS BLOCK EXCHANGER
+END USER LICENSE AGREEMENT (EULA)
 
-CUSTOM LICENSE - PERSONAL USE WITH CONTRIBUTION RIGHTS
+Copyright (c) 2025-2026 Meraby Labs. All Rights Reserved.
 
-This software and associated documentation files (the "Software") are the property 
-of the copyright holder.
+This software, including its source code, binaries, assets, documentation,
+mapping data, profiles, and any accompanying materials (collectively, the
+"Software"), is the exclusive property of Meraby Labs ("Licensor") and is
+licensed, not sold. The Software is NOT open source. By downloading, copying,
+installing, or using the Software you ("Licensee") agree to be bound by the
+terms of this Agreement. If you do not agree, do not download, install or use
+the Software.
 
-PERMITTED USES
+1. GRANT OF LICENSE - PERSONAL & NON-COMMERCIAL USE
+   Subject to Licensee's continuing compliance with this Agreement, Licensor
+   grants Licensee a personal, revocable, non-exclusive, non-transferable,
+   royalty-free license to:
+   (a) download and install the Software on devices Licensee personally owns
+       or controls;
+   (b) use the Software solely for private, non-commercial purposes related
+       to Licensee's own Space Engineers gameplay and blueprint editing.
 
-You MAY:
-- Use the Software for personal, non-commercial purposes
-- Modify the Software for your own personal use
-- Submit contributions, improvements, or bug fixes via pull requests
-- Fork the repository for personal modifications (must not redistribute)
+2. COMMERCIAL USE REQUIRES A SEPARATE LICENSE
+   Any use of the Software, in whole or in part, that is intended for or
+   directed toward commercial advantage, monetary compensation, paid services,
+   bundled commercial offerings, paid training, paid streaming/content
+   production that derives material revenue from use of the Software, or any
+   organizational/enterprise deployment, is prohibited without a separate
+   written commercial license from Licensor. To request a commercial license,
+   contact Meraby Labs.
 
-RESTRICTIONS
+3. RESTRICTIONS
+   Licensee shall NOT, and shall not permit any third party to:
+   (a) redistribute, publish, host, mirror, repackage, or sublicense the
+       Software or any portion of it;
+   (b) sell, rent, lease, loan, or otherwise transfer the Software for value;
+   (c) modify, adapt, translate, port, reverse engineer, decompile, or
+       disassemble the Software, or create derivative works, except to the
+       limited extent expressly permitted by applicable law that cannot be
+       contractually waived;
+   (d) remove, alter, or obscure any copyright, trademark, branding, or
+       proprietary notices (including in-app branding, footer credits, and
+       documentation headers);
+   (e) use the Software to develop a competing product or service;
+   (f) use the name "Meraby Labs", the Meraby Labs logo, or any related
+       trademark to endorse or promote derivative works without prior written
+       permission.
 
-You may NOT:
-- Redistribute, publish, or share the Software publicly or with third parties
-- Sell, rent, lease, sublicense, or commercialize the Software
-- Claim authorship or ownership of the Software
-- Remove, alter, or obscure any copyright, trademark, or proprietary notices
-- Use the Software in any commercial product or service
-- Distribute modified versions of the Software
+4. NO CONTRIBUTIONS / NO OPEN-SOURCE GRANT
+   The public availability of this repository on GitHub does not constitute
+   an open-source release. Forks, pull requests, or other modifications
+   submitted to this repository are not solicited and do not transfer any
+   rights or co-authorship to the submitter. Meraby Labs may, at its sole
+   discretion, decline, ignore, or close any such submission. Any material
+   knowingly submitted to Licensor is assigned to Licensor on submission, and
+   submitter waives all moral rights to it to the extent permitted by law.
 
-CONTRIBUTIONS
+5. OWNERSHIP
+   The Software is licensed, not sold. All right, title, and interest in and
+   to the Software, including all intellectual property rights, are and shall
+   remain the exclusive property of Meraby Labs. No rights are granted by
+   implication, estoppel, or otherwise except as expressly set forth herein.
 
-By submitting contributions (pull requests, issues, suggestions), you agree that:
-- Your contributions will be licensed under the same terms as this project
-- You grant the copyright holder perpetual rights to use your contributions
-- All copyright and ownership remain with the original copyright holder
+6. THIRD-PARTY MATERIALS
+   The Software interoperates with files produced by Space Engineers (a
+   trademark of Keen Software House). All third-party trademarks are the
+   property of their respective owners. This Agreement does not grant any
+   rights in or to such third-party trademarks or materials.
 
-OWNERSHIP
+7. UPDATES
+   Licensor may, but is not obligated to, provide updates, patches, or new
+   versions of the Software. Any such updates are governed by this Agreement
+   unless accompanied by a separate license.
 
-All title, ownership rights, and intellectual property rights in and to the Software 
-remain the exclusive property of the copyright holder. This License does not grant 
-you any rights to trademarks or service marks.
+8. TERMINATION
+   This license terminates automatically and without notice if Licensee
+   breaches any term of this Agreement. Upon termination, Licensee must cease
+   all use of the Software and destroy all copies in Licensee's possession or
+   control. Sections 3, 4, 5, 9, 10, and 11 survive termination.
 
-TERMINATION
+9. DISCLAIMER OF WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF
+   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, ACCURACY, AND
+   NON-INFRINGEMENT. LICENSOR DOES NOT WARRANT THAT THE SOFTWARE WILL BE
+   ERROR-FREE OR UNINTERRUPTED, OR THAT IT WILL NOT CORRUPT OR ALTER
+   LICENSEE'S BLUEPRINTS OR DATA. LICENSEE IS SOLELY RESPONSIBLE FOR
+   MAINTAINING ADEQUATE BACKUPS.
 
-This License is effective until terminated. Your rights under this License will 
-terminate automatically without notice if you fail to comply with any of its terms.
+10. LIMITATION OF LIABILITY
+    TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL
+    LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL,
+    EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE,
+    DATA, USE, OR GOODWILL, ARISING OUT OF OR RELATED TO THIS AGREEMENT OR
+    THE USE OF (OR INABILITY TO USE) THE SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGES. LICENSOR'S AGGREGATE LIABILITY UNDER THIS
+    AGREEMENT SHALL NOT EXCEED FIVE U.S. DOLLARS (USD $5).
 
-WARRANTY DISCLAIMER
+11. GENERAL
+    This Agreement constitutes the entire agreement between the parties
+    regarding the Software and supersedes any prior agreements. If any
+    provision is held unenforceable, the remaining provisions shall remain
+    in full force and effect. Failure to enforce any provision is not a
+    waiver of future enforcement. Licensee may not assign this Agreement
+    without Licensor's prior written consent.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-PARTICULAR PURPOSE, TITLE, AND NONINFRINGEMENT.
-
-LIMITATION OF LIABILITY
-
-IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT 
-OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-CONTACT FOR PERMISSIONS
-
-For permission requests or licensing inquiries, you must contact the copyright 
-holder directly.
-
----
-
-UNAUTHORIZED USE, COPYING, DISTRIBUTION, OR MODIFICATION OF THIS SOFTWARE IS 
-STRICTLY PROHIBITED AND MAY RESULT IN CIVIL AND CRIMINAL PENALTIES.
+CONTACT
+    Meraby Labs - commercial licensing & permissions: see repository profile.

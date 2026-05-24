@@ -1,5 +1,24 @@
 # Release Notes
 
+## v3.1.2 (2026-05-24)
+
+### Fixes
+- Fix mypy `[type-arg]` failures on `xml.etree.ElementTree` annotations that broke CI for every Dependabot PR.
+- Drop end-of-life Python 3.8 from the CI matrix; supported versions are now Python 3.11 and 3.12.
+
+### Security
+- XML parsing hardened with `defusedxml` via new `safe_xml.py` wrapper (XXE / billion-laughs protection).
+- GitHub Actions pinned to commit SHAs with least-privilege `permissions:` blocks.
+- Release workflow now publishes `SHA256SUMS.txt` alongside binaries.
+- Added Dependabot config for `github-actions` and `pip` ecosystems.
+- `UpdateChecker` now validates the `owner/repo` identifier before issuing HTTP requests.
+
+### Project / Licensing
+- Project ownership consolidated under Meraby Labs.
+- License re-issued as a proprietary EULA: free for personal non-commercial use; commercial use requires a separate license. The project is not open source.
+- README rewritten to reflect ownership and licensing.
+- Removed `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md` (external contributions are not solicited).
+
 ## v3.0.0 (2026-02-07)
 
 ### Major Architecture

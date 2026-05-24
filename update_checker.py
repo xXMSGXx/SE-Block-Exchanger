@@ -44,7 +44,7 @@ class UpdateChecker:
 
     def __init__(
         self,
-        repo: str = "Meraby-Labs/se-block-exchanger",
+        repo: str = "MerabyLabs/SE-Block-Exchanger",
         cache_path: Optional[Path] = None,
         cache_hours: int = 24,
     ):
